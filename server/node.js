@@ -1,7 +1,34 @@
-var http = require("http");
 
-http.createServer(function(request, response) {
-  response.writeHead(200, {"Content-Type": "text/plain"});
-  response.write("Hello World");
-  response.end();
-}).listen(8888);
+
+var express = require('express')
+  , MemoryStore = require('express').session.MemoryStore
+  , app = express();
+
+
+
+app.use(express.cookieParser());
+app.use(express.session({ secret: 'ni is the best, so fuck the rest'}));
+app.use(app.router);
+
+
+
+
+app.get('/*', function (req, res) {
+
+
+	if( !req.session.message )
+    	req.session.message = Math.random();
+
+
+    //req.session = null;
+
+    var id = req.session.message;
+
+
+
+    res.end('Created session with message : '+ id);
+
+});
+
+app.listen(3000);
+console.log('Listening on port 3000');
