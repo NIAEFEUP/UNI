@@ -16,6 +16,7 @@ app.use(app.router);
 app.get('/*', function (req, res) {
 
 
+
 	if( !req.session.message )
     	req.session.message = Math.random();
 
@@ -25,6 +26,11 @@ app.get('/*', function (req, res) {
     var id = req.session.message;
 
 
+
+	var plus = 60000;
+	
+	req.session.cookie.expires = new Date(Date.now() + plus);
+	req.session.cookie.maxAge = plus;
 
     res.end('Created session with message : '+ id);
 
