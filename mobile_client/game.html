@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>UNI - NIAEFEUP - MOSTRA 2013/2014</title>
+	<link rel="stylesheet" href="mobile.css" />
+	<link href="favicon.ico" rel="shortcut icon">
+	<script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+	<script src="http://code.jquery.com/ui/1.10.0/jquery-ui.js"></script>
+	<script src="lobby.js"></script>
+</head>
+<body>
+	<div id="lobby">
+		<p id="lobbyerrormsg" style="display:none"></p>
+		<p><label for="name">Nome:</label><input type="text" id="name"/></p>
+		<p><label for="gameid">Id do Jogo:</label><input type="text" id="gameid"/></p>
+		<p><input type="button" id="gamejoin" value="Entrar no Jogo"/> <input type="button" id="gameauto" value="Entrar jogo aleatório"/></p>
+	</div>
+	<div id="loading" style="display:none">
+	<p id="loadmsg"></p>
+	<i class="icon-spinner icon-spin icon-4x"></i>
+	</div>
+	<div id="game" style="display:none">
+		
+	</div>
+</body>

@@ -1,0 +1,34 @@
+body{
+	background-color:#20C92E;
+}
+
+//card CSS
+div.card{
+	background-color:#FFFFFF;
+	color:#000000;
+}
+
+div.card .yellow{
+	background-color:#F2F211;
+	color:#F2F211;
+}
+div.card .red{
+	background-color:#F21120;
+	color:#F21120;
+}
+div.card .blue{
+	background-color:#6411F2;
+	color:#6411F2;
+}
+div.card .green{
+	background-color:#00ED04;
+	color:#00ED04;
+}
+
+div.card .wild{
+	background-color:#000000;
+}
+
+div.card .cardtext{
+	background-color:#FFFFFF;
+}
