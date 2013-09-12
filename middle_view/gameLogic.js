@@ -1,4 +1,4 @@
-var pileElement = "#cardPile";
+var pileSize=0;
 
 function Card(color,value) {
 	this.color = color;
@@ -12,7 +12,7 @@ function Card(color,value) {
 }
 
 Card.prototype.render = function() {
-	$(pileElement).html(
+	$("#cardPile").html(
 		'<div class="card '+this.color+'">' +
 		'<div class="cardsmall cardtop">' +
 		this.value +
@@ -24,4 +24,19 @@ Card.prototype.render = function() {
 		this.value +
 		'</div>' +
 		'</div>');
+}
+
+function updatePileSize(size) {
+	$("#pileSize").html(size);
+}
+
+function clearPile() {
+	$("#cardPile").html("");
+	updatePileSize(0);
+}
+
+function recieveCard(color,value) {
+	(new Card(color,value)).render();
+	pileSize++;
+	updatePileSize(pileSize);
 }

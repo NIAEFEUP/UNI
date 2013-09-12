@@ -4,6 +4,22 @@ body {
 }
 
 
+/* Interface */
+
+#cardPile {
+	background-color: #7C997A;
+	width: 220px;
+	height: 320px;
+	margin: 0 auto; /* Centrar Div */
+}
+
+#pileSize {
+	text-align: center;
+	font-size: 32px;
+}
+
+/* Cartas */
+
 .card {
 	border: 10px solid #FFFFFF;
 	border-radius:5px;
