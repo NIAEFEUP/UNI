@@ -2,7 +2,8 @@
 
 var express = require('express') ,
 	app = express(),
-	Client = require('./client');
+	Client = require('./lib/client'),
+	Deck = require('./lib/deck');
 
 app.use(express.cookieParser());
 app.use(express.session({ secret: 'ni is the best, so fuck the rest'}));
@@ -10,6 +11,20 @@ app.use(app.router);
 
 var clients = [];
 var cid = 0;
+
+var deck = new Deck();
+deck.shuffle();
+deck.shuffle();
+deck.shuffle();
+deck.shuffle();
+deck.shuffle();
+
+console.log("deck: " + deck + ", " + deck.cards.length);
+
+for(var i = 0; i < deck.cards.length; i++)
+{
+	console.log(deck.cards[i]);
+}
 
 app.get('/*', function (req, res) {
     
