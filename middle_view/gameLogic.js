@@ -1,4 +1,4 @@
-var pileSize=0;
+var turn=0;
 
 function Card(color,value) {
 	this.color = color;
@@ -28,15 +28,22 @@ Card.prototype.render = function() {
 
 function updatePileSize(size) {
 	$("#pileSize").html(size);
-}
-
-function clearPile() {
-	$("#cardPile").html("");
-	updatePileSize(0);
+	if (size==0) {$("#cardPile").html("");}
 }
 
 function recieveCard(color,value) {
 	(new Card(color,value)).render();
-	pileSize++;
-	updatePileSize(pileSize);
 }
+
+function update() {
+	$.getJSON("getGameStatus", function(data) {
+		console.log(data);
+		if (data.turn!=turn) {
+			recieveCard(data.cardColor,data.cardValue);
+			updatePileSize(data.pileSize);
+		}
+		setTimeout(update,1000);
+	});
+}
+
+update();
