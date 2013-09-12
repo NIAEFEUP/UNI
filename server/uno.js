@@ -2,7 +2,7 @@
 
 var express = require('express') ,
 	app = express(),
-	Client = require('./lib/client'),
+	Player  = require('./lib/player'),
 	Deck = require('./lib/deck');
 
 app.use(express.cookieParser());
@@ -14,17 +14,24 @@ var cid = 0;
 
 var deck = new Deck();
 deck.shuffle();
-deck.shuffle();
-deck.shuffle();
-deck.shuffle();
-deck.shuffle();
+var player1 = new Player(),
+	player2 = new Player(),
+	player3 = new Player(),
+	player4 = new Player();
+
+
+player1.getCards(deck, 7);
+player2.getCards(deck, 7);
+player3.getCards(deck, 7);
+player4.getCards(deck, 7);
+
 
 console.log("deck: " + deck + ", " + deck.cards.length);
 
-for(var i = 0; i < deck.cards.length; i++)
-{
-	console.log(deck.cards[i]);
-}
+// for(var i = 0; i < deck.cards.length; i++)
+// {
+// 	console.log(deck.cards[i]);
+// }
 
 app.get('/*', function (req, res) {
     
