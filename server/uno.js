@@ -46,11 +46,12 @@ var players = [],
 
 
 
-function respond(res , obj, size)
+function respond(res , obj, callback, size)
 {
-
 	var out = JSON.stringify(obj) ;
-
+	if (callback) {
+		out=callback+'('+out+')';
+	}
 	if( size === undefined )
 		size = out.length;
 	else
@@ -66,10 +67,9 @@ function respond(res , obj, size)
 
 
 app.get('/status', function (req, res) {
-
-	if(    req.query.force === 'true'
+	/*if(    req.query.force === 'true'
 		|| req.session.lround !== game.round )
-	{
+	{*/
 
 		var pid = req.session.pid,
 		    cPlayer = game.getPlayer(),
@@ -85,14 +85,14 @@ app.get('/status', function (req, res) {
 
 		req.session.lround = game.round ;
 
-		respond(res, out);
+		respond(res, out, req.query.callback);
 
-	}
+	/*}
 	else
 	{
 		res.writeHead(304);
 		res.end();
-	}
+	}*/
 });
 
 
@@ -135,7 +135,7 @@ app.get('/enter', function (req, res) {
 		}
 	}
 
-	respond(res, {r: r});
+	respond(res, {r: r}, req.query.callback);
 });
 
 

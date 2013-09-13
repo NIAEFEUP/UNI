@@ -1,13 +1,26 @@
 var turn=0;
 
 function Card(color,value) {
+	
 	this.color = color;
 	this.value = value;
-	if (value=="stop") {
-		this.value="<i class='icon-blocked'></i>";
+	switch(parseInt(color))
+	{
+		case 0:this.colortext="Red";break;
+		case 1:this.colortext="Green";break;
+		case 2:this.colortext="Blue";break;
+		case 3:this.colortext="Yellow";break;
+		case 4:this.colortext="Wild";break;
+		default:this.colortext="Error";
 	}
-	else if (value=="reverse") {
-		this.value="<i class='icon-loop'></i>";
+	switch(parseInt(value))
+	{
+		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
+		case 11:this.valuetext="+2";break;
+		case 12:this.valuetext="<i class='icon-loop'></i>";break;
+		case 13:this.valuetext="Wild";break;
+		case 14:this.valuetext="+4";break;
+		default:this.valuetext=value;
 	}
 }
 
@@ -36,11 +49,10 @@ function recieveCard(color,value) {
 }
 
 function update() {
-	$.getJSON("getGameStatus", function(data) {
+	$.getJSON("http://localhost:3000/status?callback=?", function(data) {
 		console.log(data);
-		if (data.turn!=turn) {
-			recieveCard(data.cardColor,data.cardValue);
-			updatePileSize(data.pileSize);
+		if (data.h) {
+			recieveCard(data.h.c,data.h.t);
 		}
 		setTimeout(update,1000);
 	});
