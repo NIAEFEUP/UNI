@@ -31,9 +31,13 @@ Game.isColorValid = function(color) {
 
 Game.prototype.reset = function() {
 
+	this.round = 0;
+
 	this.curPlayer = 0;
 	this.direction = 1;
-	this.plusBuffer = 0;
+
+	this.bufferType = -1;
+	this.bufferSize = 0;
 
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
@@ -56,25 +60,23 @@ Game.prototype.canAddPlayer = function() {
 Game.prototype.addPlayer = function(player) {
 
 	if(    player instanceof Player
-		&& this.canAddPlayer() )
+		&& player.id >= 0 )
 	{
-		this.activePlayers.push( player );
+		if( !this.canAddPlayer() )
+			this.playerQueue.push( player );
 
-		return true;
+		else
+		{
+			this.activePlayers.push( player );
+
+			return true;
+		}
+			
 	}
 
 	return false;
 }
 
-Game.prototype.queuePlayer = function(player) {
-
-	this.playerQueue.push( player );
-}
-
-Game.prototype.moveToNextPlayer = function() {
-
-	this.curPlayer = this.calculateNextPlayer() ;
-}
 
 Game.prototype.calculateNextPlayer = function() {
 
@@ -88,23 +90,77 @@ Game.prototype.getPlayer = function() {
 
 	if(    this.curPlayer > 0
 		&& this.curPlayer < this.activePlayers.length )
-	return this.activePlayers[this.curPlayer];
+		return this.activePlayers[this.curPlayer];
 }
-
 Game.prototype.pollNextPlayer = function() {
 
 	var poll = this.calculateNextPlayer();
 
 	if(    poll > 0
 		&& poll < this.activePlayers.length )
-	return this.activePlayers[poll];
+		return this.activePlayers[poll];
 }
+
+
+Game.prototype.moveToNextPlayer = function() {
+
+	if( this.isPlaying() )
+	{
+		this.curPlayer = this.calculateNextPlayer();
+		this.getPlayer().hasDrawn = false;
+	}
+}
+
+
+
+Game.prototype.moveToNextRound = function() {
+
+	if( this.isPlaying() )
+	{
+		this.round++;
+		this.moveToNextPlayer();
+
+		if( this.bufferSize > 0 )
+		{
+			var i,found = false,
+				player = this.getPlayer();
+
+			for(i = 0; i < player.hand.size(); i++)
+			{
+				if(player.hand[i].type === this.bufferType)
+				{
+					this.found = true;
+					break;
+				}
+			}
+
+		
+			if( !found )
+				this.acceptDraw();
+		}
+	}
+}
+
+Game.prototype.canSkipPlay = function() {
+
+	return this.getPlayer().hasDrawn ;
+}
+
+Game.prototype.acceptDraw = function() {
+
+	if( this.isPlaying() && this.bufferSize > 0 )
+	{
+		this.giveCard(this.getPlayer(), this.bufferSize);
+		this.bufferSize = 0;
+	}
+
+}
+
 
 Game.prototype.reverseDirection = function() {
 
 	this.direction *= -1;
 }
-
 
 
 Game.prototype.playCard = function(card, color) {
@@ -123,6 +179,10 @@ Game.prototype.playCard = function(card, color) {
 
 	this.discard.push( card );
 
+	if(    this.bufferSize > 0
+		&& card.type !== this.bufferType )
+		this.acceptDraw();
+
 	switch( card.type )
 	{
 		case Card.TYPE.SKIP:
@@ -137,12 +197,18 @@ Game.prototype.playCard = function(card, color) {
 
 		case Card.TYPE.DRAW2:
 
+			this.bufferType = Card.TYPE.DRAW2;
+			this.bufferSize += 2;
 			break;
 
 		case Card.TYPE.WILD_DRAW4:
 
+			this.bufferType = Card.TYPE.WILD_DRAW4;
+			this.bufferSize += 4;
 			break;
 	}
+
+
 
 	this.moveToNextPlayer();
 

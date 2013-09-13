@@ -12,9 +12,11 @@ function getTime()
 
 
 
-function Player(name) {
+function Player(name, id) {
 	this.name = name;
+	this.id = id;
 	this.hand = [];
+	this.hasDrawn = false;
 
 	this.updateTime();
 }

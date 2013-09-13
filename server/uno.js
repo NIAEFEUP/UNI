@@ -3,71 +3,51 @@
 var express = require('express') ,
 	app = express();
 
+app.use(express.cookieParser());
+app.use(express.session({ key: 'uno',
+						  secret: 'ni is the best, so fuck the rest',
+						  cookie: { path: '/' }
+						  } ));
+app.use(app.router);
+app.disable('x-powered-by');
+
+
 require('./lib/utils');
 require('./lib/deck');
 require('./lib/game');
-require('./lib/player'),
-
-app.use(express.cookieParser());
-app.use(express.session({ secret: 'ni is the best, so fuck the rest'}));
-app.use(app.router);
+require('./lib/player');
 
 
-var clients = [];
-var cid = 0;
-
-var game = new Game();
-
-for(var i = 0; i < 4; i++)
-{
-	var a = game.canAddPlayer();
-	console.log("Can add: " + a);
-
-	if( a )
-	{
-		var p = new Player();
-		game.addPlayer( p );
-
-		game.giveCard(p, 7);
-	}
-}
+var players = [],
+    pid = 0,
+    game = new Game();
 
 
+app.get('/enter', function (req, res) {
 
-
-console.log("deck: " + game + ", " + game.deck.size());
-
-// for(var i = 0; i < deck.cards.length; i++)
-// {
-// 	console.log(deck.cards[i]);
-// }
-
-app.get('/*', function (req, res) {
-    
-	var id = req.session.c,
-		c, plus;
+	var c, id = req.session.c;
 
 	if( id !== undefined )
-		c = clients[id];
+		c = players[id];
 
 	else
 	{
-		req.session.c = id = cid++;
-		clients[id] = c = new Client(id);
+		req.session.c = id = pid++;
+		players[id] = c = new Player("Unknown", id);
 
-		console.log( 'New client received, id: ' + id );
+		console.log( 'New client received [' + c.name + ', ' + c.id + ']' );
 	}
 
-	plus = 60000;
 
-	// console.log(c._time);
-	// console.log(c.isTimeValid(5));
-	
-	req.session.cookie.expires = new Date(Date.now() + plus);
-	req.session.cookie.maxAge = plus;
+	res.end('Welcome player: '+ c.name + ', id: ' + c.id );
 
-	res.end('Welcome client: '+ c.name());
+});
 
+
+app.get('*', function (req, res) {
+
+	res.writeHead(404);
+	res.end();
 });
 
 app.listen(3000);
