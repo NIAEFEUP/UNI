@@ -17,6 +17,7 @@ function Player(name, id) {
 	this.id = id;
 	this.hand = [];
 	this.hasDrawn = false;
+	this.onQueue = false;
 
 	this.updateTime();
 }
