@@ -1,6 +1,4 @@
-﻿var joingameurl="";
-var joinrndgameurl="";
-var playurl="";
+﻿var playurl="ni.fe.up.pt/uno/";
 //texto: [0-9]/<=> reverse/Stop/+2/+4/Wild
 
 function Card(color,value) {
@@ -28,7 +26,7 @@ function Card(color,value) {
 }
 
 Card.prototype.html = function() {
-	return 	'<div class="card" data-color="'+this.color+'" data-value"'+this.value+'">' +
+	return 	'<div class="card" data-color="'+this.color+'" data-value="'+this.value+'">' +
 			'<div class='+this.colortext+'>' +
 			'<div class="cardtext">' +
 			this.valuetext +
@@ -40,10 +38,15 @@ Card.prototype.html = function() {
 
 $(document).ready(function() {
 	
+	/*
+	getjson a cada sala para saber lugares
+	*/
+	
+	
 	$("#gamejoin").click(function(){
 		$("#loadmsg").text("A carregar o jogo.");
+		$("#lobby").hide();
 		$("#loading").show();
-		
 		$.post(joingameurl,{/*args*/},function(data){
 				//console.log(data);
 				if (data=="null")//json de jogo cheiro
@@ -62,6 +65,7 @@ $(document).ready(function() {
 	
 	$("#gameauto").click(function(){
 		$("#loadmsg").text("A carregar o jogo.");
+		$("#lobby").hide();
 		$("#loading").show();
 		
 		$.post(joinrndgameurl,{/*args*/},function(data){
@@ -81,52 +85,52 @@ $(document).ready(function() {
 	});
 	
 	$("#drawcard").click(function(){
-		/*$("#loadmsg").text("A carregar o jogo.");
-		$("#loading").show();*/
-		
-		$.post(playurl,{/*args*/},function(data){
+		console.log("pick a card");
+		/*
+		$.post(playurl,{//args
+		},function(data){
 				//console.log(data);
 				if (data=="null")//json de jogo cheio
 				{
 
 				}else{
-					/*TODO  sacar as cartas*/
+					//TODO  sacar as cartas
 				}
 		}).error(
 		function(){
 			
-		});
+		});*/
 	});
 	
 	$(document).on('click','.card',function(event){
 		
-		console.log(event);
+		console.log($(this).data("color")+" "+$(this).data("value"));
 		
 	});
 	
 	/*teste*/
-	$("#lobby").hide();
-	$("#game").show();
+	//$("#lobby").hide();
+	//$("#game").show();
 	var c1=new Card("0","10");
 	var c2=new Card("1","13");
 	var c3=new Card("2","11");
 	var c4=new Card("3","12");
 	var c5=new Card("4","14");
 	
-	$("#game").append(c1.html());
-	$("#game").append(c2.html());
-	$("#game").append(c3.html());
-	$("#game").append(c4.html());
-	$("#game").append(c5.html());
-	$("#game").append(c1.html());
-	$("#game").append(c2.html());
-	$("#game").append(c3.html());
-	$("#game").append(c4.html());
-	$("#game").append(c5.html());
-	$("#game").append(c1.html());
-	$("#game").append(c2.html());
-	$("#game").append(c3.html());
-	$("#game").append(c4.html());
-	$("#game").append(c5.html());
+	$("#cardsdiv").append(c1.html());
+	$("#cardsdiv").append(c2.html());
+	$("#cardsdiv").append(c3.html());
+	$("#cardsdiv").append(c4.html());
+	$("#cardsdiv").append(c5.html());
+	$("#cardsdiv").append(c1.html());
+	$("#cardsdiv").append(c2.html());
+	$("#cardsdiv").append(c3.html());
+	$("#cardsdiv").append(c4.html());
+	$("#cardsdiv").append(c5.html());
+	$("#cardsdiv").append(c1.html());
+	$("#cardsdiv").append(c2.html());
+	$("#cardsdiv").append(c3.html());
+	$("#cardsdiv").append(c4.html());
+	$("#cardsdiv").append(c5.html());
 });
 

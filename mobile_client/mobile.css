@@ -3,8 +3,12 @@
 	padding-bottom:8px;
 }
 
+#game,#drawcard{
+	display:inline;
+	float:left;
+}
 /*card CSS*/
-div.card{
+div.card,#drawcard{
 	background-color:#FFFFFF;
 	
 	font-size: 24pt;
@@ -23,6 +27,12 @@ div.card{
 	float:left;
 	margin:1%;
 	border:1px black solid;
+}
+
+#drawcard{
+	line-height:1;
+	padding-top:30px;
+	
 }
 
 div.card>div{
