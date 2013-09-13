@@ -63,10 +63,13 @@ Game.prototype.addPlayer = function(player) {
 		&& player.id >= 0 )
 	{
 		if( !this.canAddPlayer() )
+		{
+			player.onQueue = true;
 			this.playerQueue.push( player );
-
+		}
 		else
 		{
+			player.onQueue = false;
 			this.activePlayers.push( player );
 
 			return true;
