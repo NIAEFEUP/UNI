@@ -7,16 +7,16 @@ function Card(color,value) {
 	
 	this.color = color;
 	this.value = value;
-	switch(color)
+	switch(parseInt(color))
 	{
-		case 0:colortext="Red";break;
-		case 1:colortext="Green";break;
-		case 2:colortext="Blue";break;
-		case 3:colortext="Yellow";break;
-		case 4:colortext:"Wild";break;
-		default:colortext="Error";
+		case 0:this.colortext="Red";break;
+		case 1:this.colortext="Green";break;
+		case 2:this.colortext="Blue";break;
+		case 3:this.colortext="Yellow";break;
+		case 4:this.colortext="Wild";break;
+		default:this.colortext="Error";
 	}
-	switch(value)
+	switch(parseInt(value))
 	{
 		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
 		case 11:this.valuetext="+2";break;
@@ -28,7 +28,7 @@ function Card(color,value) {
 }
 
 Card.prototype.html = function() {
-	return 	'<div class="card ">' +
+	return 	'<div class="card" data-color="'+this.color+'" data-value"'+this.value+'">' +
 			'<div class='+this.colortext+'>' +
 			'<div class="cardtext">' +
 			this.valuetext +
@@ -98,15 +98,31 @@ $(document).ready(function() {
 		});
 	});
 	
+	$(document).on('click','.card',function(event){
+		
+		console.log(event);
+		
+	});
+	
 	/*teste*/
 	$("#lobby").hide();
 	$("#game").show();
 	var c1=new Card("0","10");
-	var c2=new Card("1","3");
+	var c2=new Card("1","13");
 	var c3=new Card("2","11");
 	var c4=new Card("3","12");
 	var c5=new Card("4","14");
 	
+	$("#game").append(c1.html());
+	$("#game").append(c2.html());
+	$("#game").append(c3.html());
+	$("#game").append(c4.html());
+	$("#game").append(c5.html());
+	$("#game").append(c1.html());
+	$("#game").append(c2.html());
+	$("#game").append(c3.html());
+	$("#game").append(c4.html());
+	$("#game").append(c5.html());
 	$("#game").append(c1.html());
 	$("#game").append(c2.html());
 	$("#game").append(c3.html());
