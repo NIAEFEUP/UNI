@@ -1,4 +1,4 @@
-var joingameurl="";
+﻿var joingameurl="";
 var joinrndgameurl="";
 var playurl="";
 //texto: [0-9]/<=> reverse/Stop/+2/+4/Wild
@@ -14,7 +14,7 @@ function Card(color,value) {
 		case 2:colortext="Blue";break;
 		case 3:colortext="Yellow";break;
 		case 4:colortext:"Wild";break;
-		default;colortext="Error";
+		default:colortext="Error";
 	}
 	switch(value)
 	{
