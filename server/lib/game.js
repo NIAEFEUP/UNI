@@ -42,7 +42,7 @@ Game.prototype.reset = function() {
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
 
-	this.stat = Game.STATE.STOP;
+	this.state = Game.STATE.STOP;
 }
 
 Game.prototype.isPlaying = function() {
@@ -127,7 +127,7 @@ Game.prototype.moveToNextRound = function() {
 
 			for(i = 0; i < player.hand.size(); i++)
 			{
-				if(player.hand[i].type === this.bufferType)
+				if(player.hand[i].t === this.bufferType)
 				{
 					this.found = true;
 					break;
@@ -174,16 +174,16 @@ Game.prototype.playCard = function(card, color) {
 		if( !Game.isColorValid(color) )
 			return false;
 
-	    card.color = color;
+	    card.c = color;
 	}
 
 	this.discard.push( card );
 
 	if(    this.bufferSize > 0
-		&& card.type !== this.bufferType )
+		&& card.t !== this.bufferType )
 		this.acceptDraw();
 
-	switch( card.type )
+	switch( card.t )
 	{
 		case Card.TYPE.SKIP:
 

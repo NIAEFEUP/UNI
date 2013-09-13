@@ -11,13 +11,13 @@ global.DiscardPile = DiscardPile;
 
 function Card(type, color)
 {
-	this.type = type;
-	this.color = color;
+	this.t = type;
+	this.c = color;
 }
 
 Card.prototype.isWild = function() {
-	return     this.type === Card.TYPE.WILD
-			|| this.type === Card.TYPE.WILD_DRAW4 ;
+	return     this.t === Card.TYPE.WILD
+			|| this.t === Card.TYPE.WILD_DRAW4 ;
 };
 
 
@@ -146,8 +146,8 @@ DiscardPile.prototype.canPlayCard = function(card) {
 	return  card instanceof Card &&
 			(    this.head === undefined		// Primeira carta da mesa
 			  || card.isWild() 					// Pode ser jogada em qualquer altura
-			  || card.type === this.head.type 	// Carta é do mesmo tipo
-			  || card.color === this.head.color // Carta é da mesma cor
+			  || card.t === this.head.t 	// Carta é do mesmo tipo
+			  || card.c === this.head.c // Carta é da mesma cor
 			) ; 	
 };
 
@@ -159,7 +159,7 @@ DiscardPile.prototype.push = function(card) {
 	if( this.head !== undefined )
 	{
 		if( this.head.isWild() )
-		    this.head.color = Card.COLOR.NONE;
+		    this.head.c = Card.COLOR.NONE;
 
 		this.cards.push( this.head );
 	}
