@@ -44,19 +44,32 @@ function respond(res , obj, size)
 
 app.get('/status', function (req, res) {
 
-	var pid = req.session.pid,
-	    cPlayer = game.getPlayer(),
-	    sPlayer = ( cPlayer && cPlayer.id === pid ) ? true : false,
-	    hand = ( pid && game.isPlaying() && !players[pid].onQueue ) ? players[pid].hand : [] ,
+	if(    req.query.force === 'true'
+		|| req.session.lround !== game.round )
+	{
 
-	    out = { r: game.round,
-				s: game.state,
-				t: sPlayer,
-				p: ( cPlayer ? cPlayer.name : null ),
-				h: ( game.discard.head ? game.discard.head : null ),
-				l: hand };
+		var pid = req.session.pid,
+		    cPlayer = game.getPlayer(),
+		    sPlayer = ( cPlayer && cPlayer.id === pid ) ? true : false,
+		    hand = ( pid && game.isPlaying() && !players[pid].onQueue ) ? players[pid].hand : [] ,
 
-	respond(res, out);
+		    out = { s: game.state,
+		    		r: game.round,
+					t: sPlayer,
+					p: ( cPlayer ? cPlayer.name : null ),
+					h: ( game.discard.head ? game.discard.head : null ),
+					l: hand };
+
+		req.session.lround = game.round ;
+
+		respond(res, out);
+
+	}
+	else
+	{
+		res.writeHead(304);
+		res.end();
+	}
 });
 
 
@@ -94,6 +107,7 @@ app.get('*', function (req, res) {
 	res.writeHead(404, {'Content-Length': 0});
 	res.end();
 });
+
 
 app.listen(3000);
 
