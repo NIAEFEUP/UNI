@@ -1,18 +1,25 @@
 
-var player = require('./player');
+
+global.Card = Card;
+global.Deck = Deck;
+global.DiscardPile = DiscardPile;
 
 
-module.exports = Deck;
-module.exports.Card = Card;
+/***********************************************************************
+ *	Card
+ ***********************************************************************/
 
-function Card(type, color) {
+function Card(type, color)
+{
 	this.type = type;
 	this.color = color;
 }
 
-// Card.prototype.getType = function() {
-// 	return this.type;
-// }
+Card.prototype.isWild = function() {
+	return     this.type === Card.TYPE.WILD
+			|| this.type === Card.TYPE.WILD_DRAW4 ;
+};
+
 
 Card.TYPE = {
 	C0		: 0,
@@ -29,14 +36,22 @@ Card.TYPE = {
 	DRAW2	: 11,
 	REVERSE	: 12,
 	WILD 	: 13,
-	WILD_DRAW4	: 14 };
+	WILD_DRAW4	: 14
+};
 
 Card.COLOR = {
 	RED		: 0,
 	GREEN	: 1,
 	BLUE	: 2,
 	YELLOW	: 3,
-	NONE	: 4 };
+	NONE	: 4
+};
+
+
+
+/***********************************************************************
+ *	Deck
+ ***********************************************************************/
 
 
 function colorInitializer(type, stack)
@@ -52,8 +67,10 @@ function colorInitializer(type, stack)
 	stack.push(y);
 }
 
-function Deck() {
+function Deck()
+{
 	this.cards = [];
+	
 
 	var i,j,c;
 
@@ -74,19 +91,80 @@ function Deck() {
 		}
 	}
 
-
+	this.shuffle();
 }
+
+Deck.prototype.size = function() {
+	return this.cards.length;
+};
 
 
 Deck.prototype.shuffle = function() {
-
-	var i,swap, temp;
-
-	for (i = this.cards.length - 1; i > 0; i--)
-	{ 
-    	swap = (Math.random() * i) | 0 ;
-    	temp = this.cards[i];
-    	this.cards[i] = this.cards[swap];
-    	this.cards[swap] = temp;
-	}
+	Utils.arrayShuffle(this.cards);
 };
+
+Deck.prototype.absorb = function(pile) {
+
+	if( !(pile instanceof DiscardPile) )
+		return false;
+
+	var card, arr = pile.cards;
+	
+	while( arr.length > 0 )
+	{
+		card = arr.pop();
+
+		this.cards.push( card );
+	}
+
+	this.shuffle();
+
+	return true;
+};
+
+
+
+
+
+
+/***********************************************************************
+ *	DiscardPile
+ ***********************************************************************/
+
+function DiscardPile()
+{
+	this.cards = [];
+	this.head = undefined;
+}
+
+DiscardPile.prototype.size = function() {
+	return this.cards.length;
+};
+
+DiscardPile.prototype.canPlayCard = function(card) {
+
+	return  card instanceof Card &&
+			(    this.head === undefined		// Primeira carta da mesa
+			  || card.isWild() 					// Pode ser jogada em qualquer altura
+			  || card.type === this.head.type 	// Carta é do mesmo tipo
+			  || card.color === this.head.color // Carta é da mesma cor
+			) ; 	
+};
+
+DiscardPile.prototype.push = function(card) {
+
+	if( !(card instanceof Card) )
+		return false;
+
+	if( this.head !== undefined )
+	{
+		if( this.head.isWild() )
+		    this.head.color = Card.COLOR.NONE;
+
+		this.cards.push( this.head );
+	}
+
+	this.head = card;
+
+	return true;
+}
