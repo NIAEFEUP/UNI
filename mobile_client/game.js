@@ -44,7 +44,7 @@ $(document).ready(function() {
 	
 	
 	$("#gamejoin").click(function(){
-		$("#loadmsg").text("A carregar o jogo.");
+		$("#loadmsg").append("A carregar o jogo.");
 		$("#lobby").hide();
 		$("#loading").show();
 		$.post(joingameurl,{/*args*/},function(data){
