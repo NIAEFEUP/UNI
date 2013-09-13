@@ -1,14 +1,26 @@
 
 
 var express = require('express') ,
-	app = express();
+	app = express(),
+	args = process.argv.splice(2),
+	base = '';
+
+for(var i = 0; i < args.length; i++)
+{
+	if( args[i] === '-b' && (i+1) < args.length )
+	{
+		i++;
+		base = ( args[i][0] !== '/' ? '/' : '' ) + args[i] ;
+	}
+}
+
 
 app.use(express.cookieParser());
 app.use(express.session({ key: 'uno',
 						  secret: 'ni is the best, so fuck the rest',
 						  cookie: { path: '/' }
 						  } ));
-app.use(app.router);
+app.use(base, app.router);
 app.disable('x-powered-by');
 
 
@@ -41,6 +53,7 @@ function respond(res , obj, size)
 
 	res.end();
 }
+
 
 app.get('/status', function (req, res) {
 
@@ -75,27 +88,41 @@ app.get('/status', function (req, res) {
 
 app.get('/enter', function (req, res) {
 
-	var c, id = req.session.pid,
+	var c, id = req.session.pid,name,
 		r = 0;
 
 	if( id !== undefined )
+	{
 		c = players[id];
-
+		name = c.name;
+	}
 	else
 	{
-		req.session.pid = id = pid++;
+		name = req.query.name ;
 
-		players[id] = c = new Player("Unknown", id);
-
-		if( game.addPlayer( c ) )
+		if( !name )
 		{
-			game.giveCard(c, 7);
-			r = 1
+			res.writeHead(400);
+			res.end();
+
+			return;
 		}
 		else
-			r = 2;
+		{
+			req.session.pid = id = pid++;
 
-		console.log( 'New client received [' + c.name + ', ' + c.id + ', ' + (r == 1 ? 'OK' : 'WAITING') + ']' );
+			players[id] = c = new Player(name, id);
+
+			if( game.addPlayer( c ) )
+			{
+				game.giveCard(c, 7);
+				r = 1
+			}
+			else
+				r = 2;
+
+			console.log( 'New client received [' + c.name + ', ' + c.id + ', ' + (r == 1 ? 'OK' : 'WAITING') + ']' );
+		}
 	}
 
 	respond(res, {r: r});
@@ -103,6 +130,8 @@ app.get('/enter', function (req, res) {
 
 
 app.get('*', function (req, res) {
+
+	console.log('Wrong request received: ' + req.path);
 
 	res.writeHead(404, {'Content-Length': 0});
 	res.end();
