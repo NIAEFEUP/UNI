@@ -3,14 +3,24 @@
 var express = require('express') ,
 	app = express(),
 	args = process.argv.splice(2),
-	base = '';
+	base = '',
+	port = 3000;
 
 for(var i = 0; i < args.length; i++)
 {
-	if( args[i] === '-b' && (i+1) < args.length )
+	if( (i+1) < args.length )
 	{
-		i++;
-		base = ( args[i][0] !== '/' ? '/' : '' ) + args[i] ;
+		if( args[i] === '-b' )
+		{
+			i++;
+			base = ( args[i][0] !== '/' ? '/' : '' ) + args[i] ;
+		}
+		else
+		if( args[i] === '-p' )
+		{
+			i++;
+			port = args[i] ;
+		}
 	}
 }
 
@@ -138,6 +148,6 @@ app.get('*', function (req, res) {
 });
 
 
-app.listen(3000);
+app.listen(port);
 
-console.log('Listening on port 3000');
+console.log('Listening on port ' + port);
