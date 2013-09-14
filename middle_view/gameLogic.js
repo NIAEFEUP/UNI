@@ -1,4 +1,6 @@
 var turn=0;
+var activePlayer="";
+var cards=new Array();
 
 function Card(color,value) {
 	
@@ -39,10 +41,20 @@ Card.prototype.render = function() {
 		'</div>');
 }
 
-function updatePileSize(size) {
-	$("#pileSize").html(size);
-	if (size==0) {$("#cardPile").html("");}
+function updateCurrentPlayers(players,cards) {
+	$("#currentPlayers").html("");
+	for (x in players) {
+		var active="";
+		if (players[x]==activePlayer) {active=" active";}
+		$("#currentPlayers").append(
+			"<span class='player"+active+"'>"
+			+players[x]
+			+((cards && cards.length>x)?(" ("+cards[x]+")"):"")
+			+"</span>"
+		);
+	}
 }
+
 
 function recieveCard(color,value) {
 	(new Card(color,value)).render();
@@ -54,8 +66,17 @@ function update() {
 		if (data.h) {
 			recieveCard(data.h.c,data.h.t);
 		}
-		setTimeout(update,1000);
+		if (data.p) {
+			activePlayer=data.p;
+		}
+		cards=data.c;
 	});
+	$.getJSON("http://localhost:3000/lobby?callback=?", function(data) {
+		if (data.p) {
+			updateCurrentPlayers(data.p)
+		}
+	});
+	setTimeout(update,1000);
 }
 
 update();

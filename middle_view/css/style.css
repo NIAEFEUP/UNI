@@ -13,9 +13,18 @@ body {
 	margin: 0 auto; /* Centrar Div */
 }
 
-#pileSize {
+#currentPlayers {
 	text-align: center;
-	font-size: 32px;
+	font-size: 24px;
+}
+
+
+.player {
+	margin:0.5em;
+}
+
+.active {
+	font-weight:bold;
 }
 
 /* Cartas */
@@ -95,7 +104,6 @@ body {
 	bottom: 0;
 	text-align: right;
 }
-
 
 
 /* Icons */
