@@ -26,6 +26,7 @@ for(var i = 0; i < args.length; i++)
 
 
 app.use(express.cookieParser());
+app.use(express.bodyParser());
 app.use(express.session({ key: 'uno',
 						  secret: 'ni is the best, so fuck the rest',
 						  cookie: { path: '/' }
@@ -41,6 +42,7 @@ require('./lib/player');
 
 
 var players = [],
+	playerNames = [],
     pid = 0,
     game = new Game();
 
@@ -48,20 +50,23 @@ var players = [],
 
 function respond(res , obj, callback, size)
 {
-	var out = JSON.stringify(obj) ;
-	if (callback) {
-		out=callback+'('+out+')';
-	}
-	if( size === undefined )
-		size = out.length;
-	else
-		size += out.length;
+	var out = JSON.stringify(obj),
+		len;
 
+	if (callback)
+		out=callback+'('+out+')';
+
+	len = Buffer.byteLength(out, 'UTF-8');
+
+	if ( size === undefined )
+		size = len;
+	else
+		size += len;
+	
 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
 						'Content-Length': size});
 
 	res.write(out);
-
 	res.end();
 }
 
@@ -74,7 +79,7 @@ app.get('/status', function (req, res) {
 		var pid = req.session.pid,
 		    cPlayer = game.getPlayer(),
 		    sPlayer = ( cPlayer && cPlayer.id === pid ) ? true : false,
-		    hand = ( pid && game.isPlaying() && !players[pid].onQueue ) ? players[pid].hand : [] ,
+		    hand = ( pid !== undefined && game.isPlaying() && !players[pid].onQueue ) ? players[pid].hand : [] ,
 
 		    out = { s: game.state,
 		    		r: game.round,
@@ -96,10 +101,37 @@ app.get('/status', function (req, res) {
 });
 
 
-app.get('/enter', function (req, res) {
+app.get('/lobby', function (req, res) {
 
-	var c, id = req.session.pid,name,
-		r = 0;
+	var out,
+		pid = req.session.pid,
+		player = (pid !== undefined ) ? players[pid] : false ;
+
+	if( playerNames.length !== game.activePlayers.length )
+	{
+		playerNames = [];
+
+		for(var i = 0; i < game.activePlayers.length; i++ )
+			playerNames.push( game.activePlayers[i].name );
+	}
+
+    out = { s: game.state,
+			p: playerNames,
+			ps: playerNames.length,
+			pl: Game.PLAYER_LIMIT,
+			qs: game.playerQueue.length,
+			q: player ? player.onQueue : null,
+			v: player ? player.startVote : null,
+			tv: game.startVotes };
+
+	respond(res, out, req.query.callback);
+
+});
+
+
+app.post('/lobby', function (req, res) {
+
+	var c, id = req.session.pid, name = '';
 
 	if( id !== undefined )
 	{
@@ -108,7 +140,7 @@ app.get('/enter', function (req, res) {
 	}
 	else
 	{
-		name = req.query.name ;
+		name = req.body.name ;
 
 		if( !name )
 		{
@@ -120,26 +152,61 @@ app.get('/enter', function (req, res) {
 		else
 		{
 			req.session.pid = id = pid++;
-
 			players[id] = c = new Player(name, id);
 
-			if( game.addPlayer( c ) )
-			{
-				game.giveCard(c, 7);
-				r = 1
-			}
-			else
-				r = 2;
+			game.addPlayer( c );
 
-			console.log( 'New client received [' + c.name + ', ' + c.id + ', ' + (r == 1 ? 'OK' : 'WAITING') + ']' );
+			console.log( 'New client received [' + c.name + ', ' + c.id + ', ' + (!c.onQueue  ? 'OK' : 'Queue') + ']' );
 		}
 	}
 
-	respond(res, {r: r}, req.query.callback);
+	var out = { n: name,
+		  		q: c.onQueue };
+
+	respond(res, out, req.body.callback);
+});
+
+app.post('/vote-start', function (req, res) {
+
+	if( game.isStopped() )
+	{
+		var pid = req.session.pid,
+			player = (pid !== undefined ) ? players[pid] : false ;
+
+		if( player && !player.onQueue )
+		{
+			if( !player.startVote )
+			{
+				player.startVote = true;
+				game.startVotes++;
+
+				if( game.activePlayers.length === game.startVotes )
+				{
+					for(var i = 0; i < game.activePlayers.length; i++ )
+						game.giveCard(game.activePlayers[i], 7);
+
+
+					//TODO: carta da mesa
+
+					game.state = Game.STATE.PLAYING;
+				}
+				
+			}
+
+			res.writeHead(200);
+			res.end();
+		}
+
+
+	}
+
+	res.writeHead(403);
+	res.end();
 });
 
 
-app.get('*', function (req, res) {
+
+app.all('*', function (req, res) {
 
 	console.log('Wrong request received: ' + req.path);
 

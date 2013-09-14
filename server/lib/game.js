@@ -13,7 +13,10 @@ function Game()
 Game.STATE = {
 	STOP	: 0,
 	PLAYING	: 1,
+	PAUSED	: 2,
 }
+
+Game.PLAYER_LIMIT = 10;
 
 Game.isColorValid = function(color) {
 
@@ -39,12 +42,18 @@ Game.prototype.reset = function() {
 	this.bufferType = -1;
 	this.bufferSize = 0;
 
+	this.startVotes = 0;
+
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
 
 	this.state = Game.STATE.STOP;
 }
 
+Game.prototype.isStopped = function() {
+
+	return this.state === Game.STATE.STOP ;
+}
 Game.prototype.isPlaying = function() {
 
 	return this.state === Game.STATE.PLAYING ;
@@ -52,8 +61,8 @@ Game.prototype.isPlaying = function() {
 
 Game.prototype.canAddPlayer = function() {
 
-	return     !this.isPlaying()
-			&& this.activePlayers.length < 15 ;
+	return     this.isStopped()
+			&& this.activePlayers.length < Game.PLAYER_LIMIT ;
 
 }
 
@@ -62,19 +71,22 @@ Game.prototype.addPlayer = function(player) {
 	if(    player instanceof Player
 		&& player.id >= 0 )
 	{
-		if( !this.canAddPlayer() )
-		{
-			player.onQueue = true;
-			this.playerQueue.push( player );
-		}
-		else
+		player.reset();
+
+		if( this.canAddPlayer() )
 		{
 			player.onQueue = false;
 			this.activePlayers.push( player );
 
+			for(var i = 0; i < this.activePlayers.length; i++ )
+				this.activePlayers[i].startVote = false;
+
+			this.startVotes = 0;
+
 			return true;
 		}
-			
+		else
+			this.playerQueue.push( player );
 	}
 
 	return false;
@@ -91,7 +103,7 @@ Game.prototype.calculateNextPlayer = function() {
 
 Game.prototype.getPlayer = function() {
 
-	if(    this.curPlayer > 0
+	if(    this.curPlayer >= 0
 		&& this.curPlayer < this.activePlayers.length )
 		return this.activePlayers[this.curPlayer];
 }
@@ -99,7 +111,7 @@ Game.prototype.pollNextPlayer = function() {
 
 	var poll = this.calculateNextPlayer();
 
-	if(    poll > 0
+	if(    poll >= 0
 		&& poll < this.activePlayers.length )
 		return this.activePlayers[poll];
 }

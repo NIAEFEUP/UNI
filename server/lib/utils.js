@@ -24,6 +24,13 @@ Utils.arrayShuffle = function(arr)
 	return true;
 }
 
+
+Utils.getTime = function()
+{
+	return ( new Date() / 1000 ) | 0 ;
+}
+
+
 Number.prototype.mod = function(n) {
 	return ((this%n)+n)%n;
 }
