@@ -59,6 +59,34 @@ Game.prototype.isPlaying = function() {
 	return this.state === Game.STATE.PLAYING ;
 }
 
+
+
+Game.prototype.canStart = function() {
+
+	return     this.isStopped()
+			&& this.activePlayers.length >= 2 
+			&& this.startVotes === this.activePlayers.length ;
+}
+
+
+Game.prototype.start = function() {
+
+	if( !this.isStopped() )
+		return false;
+
+	this.deck.shuffle();
+
+	for(var i = 0; i < this.activePlayers.length; i++ )
+		this.giveCard( this.activePlayers[i], 7 );
+
+	//TODO: carta da mesa
+
+	this.state = Game.STATE.PLAYING;
+
+	return true;
+}
+
+
 Game.prototype.canAddPlayer = function() {
 
 	return     this.isStopped()

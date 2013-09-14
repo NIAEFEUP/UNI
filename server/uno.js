@@ -79,7 +79,8 @@ app.get('/status', function (req, res) {
 		var pid = req.session.pid,
 		    cPlayer = game.getPlayer(),
 		    sPlayer = ( cPlayer && cPlayer.id === pid ) ? true : false,
-		    hand = ( pid !== undefined && game.isPlaying() && !players[pid].onQueue ) ? players[pid].hand : [] ,
+		    player = (pid !== undefined ) ? players[pid] : false, 
+		    hand = ( game.isPlaying() && player && !player.onQueue ) ? player.hand : [] ,
 
 		    out = { s: game.state,
 		    		r: game.round,
@@ -87,6 +88,9 @@ app.get('/status', function (req, res) {
 					p: ( cPlayer ? cPlayer.name : null ),
 					h: ( game.discard.head ? game.discard.head : null ),
 					l: hand };
+
+		if( player )
+			player.updateTime();
 
 		req.session.lround = game.round ;
 
@@ -124,6 +128,9 @@ app.get('/lobby', function (req, res) {
 			v: player ? player.startVote : null,
 			tv: game.startVotes };
 
+	if( player )
+		player.updateTime();
+
 	respond(res, out, req.query.callback);
 
 });
@@ -131,12 +138,15 @@ app.get('/lobby', function (req, res) {
 
 app.post('/lobby', function (req, res) {
 
-	var c, id = req.session.pid, name = '';
+	var player, id = req.session.pid, name = '';
 
 	if( id !== undefined )
 	{
-		c = players[id];
-		name = c.name;
+		player = players[id];
+		name = player.name;
+
+		if( player )
+			player.updateTime();
 	}
 	else
 	{
@@ -152,16 +162,16 @@ app.post('/lobby', function (req, res) {
 		else
 		{
 			req.session.pid = id = pid++;
-			players[id] = c = new Player(name, id);
+			players[id] = player = new Player(name, id);
 
-			game.addPlayer( c );
+			game.addPlayer( player );
 
-			console.log( 'New client received [' + c.name + ', ' + c.id + ', ' + (!c.onQueue  ? 'OK' : 'Queue') + ']' );
+			console.log( 'New client received [' + player.name + ', ' + player.id + ', ' + (!player.onQueue  ? 'OK' : 'Queue') + ']' );
 		}
 	}
 
 	var out = { n: name,
-		  		q: c.onQueue };
+		  		q: player.onQueue };
 
 	respond(res, out, req.body.callback);
 });
@@ -173,31 +183,31 @@ app.post('/vote-start', function (req, res) {
 		var pid = req.session.pid,
 			player = (pid !== undefined ) ? players[pid] : false ;
 
-		if( player && !player.onQueue )
+		if( player )
 		{
-			if( !player.startVote )
+			player.updateTime();
+
+
+			if( !player.onQueue )
 			{
-				player.startVote = true;
-				game.startVotes++;
-
-				if( game.activePlayers.length === game.startVotes )
+				if( !player.startVote )
 				{
-					for(var i = 0; i < game.activePlayers.length; i++ )
-						game.giveCard(game.activePlayers[i], 7);
+					player.startVote = true;
+					game.startVotes++;
 
+					console.log("Votes: " + game.startVotes + "/" + game.activePlayers.length );
 
-					//TODO: carta da mesa
+					if( game.canStart() && game.start() )
+						console.log("Game started");
 
-					game.state = Game.STATE.PLAYING;
 				}
-				
+
+				res.writeHead(200);
+				res.end();
+
+				return;
 			}
-
-			res.writeHead(200);
-			res.end();
 		}
-
-
 	}
 
 	res.writeHead(403);
