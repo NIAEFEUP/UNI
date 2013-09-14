@@ -183,7 +183,7 @@ app.post('/vote-start', function (req, res) {
 			player.updateTime();
 
 
-			if( !player.onQueue )
+			if( !player.onQueue && game.activePlayers.length >= 2 )
 			{
 				if( !player.startVote )
 				{
