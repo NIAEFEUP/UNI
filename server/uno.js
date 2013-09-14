@@ -42,8 +42,8 @@ require('./lib/player');
 
 
 var players = [],
-	playerNames = [],
     pid = 0,
+
     game = new Game();
 
 
@@ -78,16 +78,17 @@ app.get('/status', function (req, res) {
 
 		var pid = req.session.pid,
 		    cPlayer = game.getPlayer(),
-		    sPlayer = ( cPlayer && cPlayer.id === pid ) ? true : false,
-		    player = (pid !== undefined ) ? players[pid] : false, 
+		    sPlayer = ( cPlayer && game.isPlaying() && cPlayer.id === pid ) ? true : false,
+		    player = ( pid !== undefined ) ? players[pid] : false, 
 		    hand = ( game.isPlaying() && player && !player.onQueue ) ? player.hand : [] ,
 
 		    out = { s: game.state,
 		    		r: game.round,
 					t: sPlayer,
-					p: ( cPlayer ? cPlayer.name : null ),
+					p: ( game.isPlaying() && cPlayer ) ? cPlayer.name : null ,
 					h: ( game.discard.head ? game.discard.head : null ),
-					l: hand };
+					l: hand,
+					c: game.handsCache };
 
 		if( player )
 			player.updateTime();
@@ -111,17 +112,10 @@ app.get('/lobby', function (req, res) {
 		pid = req.session.pid,
 		player = (pid !== undefined ) ? players[pid] : false ;
 
-	if( playerNames.length !== game.activePlayers.length )
-	{
-		playerNames = [];
-
-		for(var i = 0; i < game.activePlayers.length; i++ )
-			playerNames.push( game.activePlayers[i].name );
-	}
 
     out = { s: game.state,
-			p: playerNames,
-			ps: playerNames.length,
+			p: game.namesCache,
+			ps: game.activePlayers.length,
 			pl: Game.PLAYER_LIMIT,
 			qs: game.playerQueue.length,
 			q: player ? player.onQueue : null,
@@ -165,6 +159,7 @@ app.post('/lobby', function (req, res) {
 			players[id] = player = new Player(name, id);
 
 			game.addPlayer( player );
+			playerNames = [];
 
 			console.log( 'New client received [' + player.name + ', ' + player.id + ', ' + (!player.onQueue  ? 'OK' : 'Queue') + ']' );
 		}

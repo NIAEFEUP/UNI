@@ -44,6 +44,9 @@ Game.prototype.reset = function() {
 
 	this.startVotes = 0;
 
+	this.handsCache = [];
+	this.namesCache = [];
+
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
 
@@ -75,11 +78,15 @@ Game.prototype.start = function() {
 		return false;
 
 	this.deck.shuffle();
+	Utils.arrayShuffle(this.activePlayers);
+	this.buildPlayerNamesCache();
 
 	for(var i = 0; i < this.activePlayers.length; i++ )
 		this.giveCard( this.activePlayers[i], 7 );
 
 	//TODO: carta da mesa
+
+	this.countPlayerCards();
 
 	this.state = Game.STATE.PLAYING;
 
@@ -110,6 +117,8 @@ Game.prototype.addPlayer = function(player) {
 				this.activePlayers[i].startVote = false;
 
 			this.startVotes = 0;
+
+			this.buildPlayerNamesCache();
 
 			return true;
 		}
@@ -149,11 +158,39 @@ Game.prototype.moveToNextPlayer = function() {
 
 	if( this.isPlaying() )
 	{
-		this.curPlayer = this.calculateNextPlayer();
-		this.getPlayer().hasDrawn = false;
+		var i,player;
+
+		for(i = 0; i < this.activePlayers.length; i++ )
+		{
+			this.curPlayer = this.calculateNextPlayer();
+			player = this.getPlayer();
+
+			if( player && player.hand.length > 0 )
+			{
+				player.hasDrawn = false;
+
+				break;
+			}
+		}
 	}
 }
 
+
+Game.prototype.countPlayerCards = function() {
+
+	this.handsCache = [];
+	
+	for( var i = 0; i < this.activePlayers.length; i++ )
+		this.handsCache.push( this.activePlayers[i].hand.length )
+}
+
+Game.prototype.buildPlayerNamesCache = function() {
+
+	this.namesCache = [];
+	
+	for( var i = 0; i < this.activePlayers.length; i++ )
+		this.namesCache.push( this.activePlayers[i].name )
+}
 
 
 Game.prototype.moveToNextRound = function() {
@@ -165,10 +202,10 @@ Game.prototype.moveToNextRound = function() {
 
 		if( this.bufferSize > 0 )
 		{
-			var i,found = false,
+			var found = false,
 				player = this.getPlayer();
 
-			for(i = 0; i < player.hand.size(); i++)
+			for(var i = 0; i < player.hand.size(); i++)
 			{
 				if(player.hand[i].t === this.bufferType)
 				{
@@ -181,8 +218,12 @@ Game.prototype.moveToNextRound = function() {
 			if( !found )
 				this.acceptDraw();
 		}
+
+
+		this.countPlayerCards();
 	}
 }
+
 
 Game.prototype.canSkipPlay = function() {
 
@@ -252,9 +293,7 @@ Game.prototype.playCard = function(card, color) {
 	}
 
 
-
-	this.moveToNextPlayer();
-
+	this.moveToNextRound();
 };
 
 Game.prototype.giveCard = function(player, n) {
