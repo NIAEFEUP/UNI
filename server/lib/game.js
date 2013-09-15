@@ -17,6 +17,7 @@ Game.STATE = {
 }
 
 Game.PLAYER_LIMIT = 10;
+Game.MIN_PALYER = 1;
 
 Game.isColorValid = function(color) {
 
@@ -49,7 +50,7 @@ Game.prototype.reset = function() {
 	this.handsCache = [];
 	this.namesCache = [];
 
-	this.playersWon = 0;
+	this.playersOut = 0;
 
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
@@ -71,7 +72,7 @@ Game.prototype.isPlaying = function() {
 Game.prototype.canStart = function() {
 
 	return     this.isStopped()
-			&& this.activePlayers.length >= 2 
+			&& this.activePlayers.length >= Game.MIN_PALYER
 			&& this.startVotes === this.activePlayers.length ;
 }
 
@@ -337,4 +338,25 @@ Game.prototype.giveCard = function(player, n) {
 	}
 
 	return r;
+}
+
+
+
+
+
+
+Game.prototype.startTimer = function(callback, time) {
+
+	var game = this,
+		_check = function() {
+
+		callback();
+
+		setTimeout(_check, time);
+	};
+
+	setTimeout(function(){
+		_check();
+	}, time);
+
 }

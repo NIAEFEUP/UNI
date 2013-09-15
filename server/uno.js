@@ -4,7 +4,9 @@ var express = require('express') ,
 	app = express(),
 	args = process.argv.splice(2),
 	base = '',
-	port = 3000;
+	port = 3000,
+	deadTimerInterval = 5000,
+	clientTimeout = 60 ;
 
 for(var i = 0; i < args.length; i++)
 {
@@ -161,7 +163,8 @@ app.post('/lobby', function (req, res) {
 
 	var player, id = req.session.pid, name = '';
 
-	if( id !== undefined )
+	if(    id !== undefined
+		&& players[id] !== null )
 	{
 		player = players[id];
 		name = player.name;
@@ -210,7 +213,8 @@ app.post('/vote-start', function (req, res) {
 			player.updateTime();
 
 
-			if( !player.onQueue && game.activePlayers.length >= 2 )
+			if(    !player.onQueue
+				&& game.activePlayers.length >= Game.MIN_PALYER )
 			{
 				if( !player.startVote )
 				{
@@ -307,6 +311,42 @@ app.get('/skip-turn', function (req, res) {
 });
 
 
+function checkGameEnded()
+{
+	if( ( game.playersOut + 1 ) >= game.activePlayers.length )
+	{
+		
+		game.moveToNextPlayer();
+		var player = game.getPlayer();
+
+		if( player && !player.onQueue )
+		{
+			player.reset();
+
+			game.playerQueue.push( player );
+		}
+
+		player = undefined;
+
+		game.reset();
+		game.gamesPlayed++;
+
+		console.log( "Game ended" );
+
+		for( var j = 0; j < Game.PLAYER_LIMIT && j < game.playerQueue.length ; j++ )
+		{
+			player = game.playerQueue.shift();
+
+			if( player )
+				game.addPlayer( player );
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 app.post('/play/:type/:color', function (req, res) {
 
 	if( game.isPlaying() )
@@ -362,33 +402,36 @@ app.post('/play/:type/:color', function (req, res) {
 
 						game.playerQueue.push( cPlayer );
 
-						game.playersWon++;
+						game.playersOut++;
 
-						if( ( game.playersWon + 1 ) >= game.activePlayers.length )
-						{
-							console.log( "Game ended" );
 
-							game.moveToNextPlayer();
-							var player = game.getPlayer();
+						nextRound = !checkGameEnded();
 
-							if( !player.onQueue )
-								game.playerQueue.push( player );
+						// if( ( game.playersOut + 1 ) >= game.activePlayers.length )
+						// {
+						// 	console.log( "Game ended" );
 
-							player = undefined;
+						// 	game.moveToNextPlayer();
+						// 	var player = game.getPlayer();
 
-							game.reset();
-							game.gamesPlayed++;
+						// 	if( !player.onQueue )
+						// 		game.playerQueue.push( player );
 
-							nextRound = false;
+						// 	player = undefined;
 
-							for( var j = 0; j < Game.PLAYER_LIMIT && j < game.playerQueue.length ; j++ )
-							{
-								player = game.playerQueue.shift();
+						// 	game.reset();
+						// 	game.gamesPlayed++;
 
-								if( player )
-									game.addPlayer( player );
-							}
-						}
+						// 	nextRound = false;
+
+						// 	for( var j = 0; j < Game.PLAYER_LIMIT && j < game.playerQueue.length ; j++ )
+						// 	{
+						// 		player = game.playerQueue.shift();
+
+						// 		if( player )
+						// 			game.addPlayer( player );
+						// 	}
+						// }
 					}
 
 					if( nextRound )
@@ -422,3 +465,64 @@ app.all('*', function (req, res) {
 app.listen(port);
 
 console.log('Listening on port ' + port);
+
+
+
+game.startTimer(function(){
+
+	var i,j, player, card,
+		lostPlayerTurn = false,
+		deadCount = 0,
+		playing = !game.isStopped();
+	    now = Utils.getTime() - clientTimeout;
+
+	for(i = game.activePlayers.length - 1 ; i >= 0 ; i-- )
+	{
+		player = game.activePlayers[i];
+
+		if(    !player.onQueue
+			&& player._time < now )
+		{
+			console.log( "Player lost connection '" + player.name + "' [id: " + player.id + "]" );
+
+			if(    playing
+				&& game.curPlayer === i )
+			{
+				lostPlayerTurn = true;
+				console.log("Disconnected player turn");
+			}
+
+			deadCount++;
+
+			for( j = 0; j < player.hand.length ; j++ )
+			{
+				card = player.hand[i];
+
+				if( card )
+					game.discard.cards.push( card );
+			}
+
+			player.reset();
+			game.playersOut++;
+
+			if( players[player.id] )
+				players[player.id] = null ;
+
+			if( game.isStopped() )
+				game.activePlayers.splice( i, 1 );
+		}
+	}
+
+	if( deadCount > 0 )
+	{
+		game.buildPlayerNamesCache();
+		game.countPlayerCards();
+
+		if(    playing
+			&& !checkGameEnded()
+			&& lostPlayerTurn )
+			game.moveToNextRound();
+	}
+
+}, deadTimerInterval);
+console.log('Dead client timer started');

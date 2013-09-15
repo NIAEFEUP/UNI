@@ -31,6 +31,10 @@ Player.prototype.updateTime = function() {
 	this._time = Utils.getTime();
 }
 
-Player.prototype.isTimeValid = function(secs) {
-	return this._time >= ( Utils.getTime() - secs ) ;
-}
+// Player.prototype.isTimeValid = function(secs) {
+	
+// 	if( t === undefined )
+// 		t = Utils.getTime() ;
+
+// 	return this._time >= ( t - secs ) ;
+// }
