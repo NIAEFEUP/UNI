@@ -58,8 +58,8 @@ function updateCurrentPlayers(players) {
 	}
 }
 
-function updateVotes(votes) {
-	$("#votes").html("Votos: "+votes);
+function updateVotes(votes,players) {
+	$("#votes").html("Votos: "+votes+"/"+players);
 }
 
 
@@ -67,9 +67,8 @@ function recieveCard(color,value) {
 	(new Card(color,value)).render();
 }
 
-function update() {
+function updateStatus() {
 	$.getJSON("http://localhost:3000/status?callback=?", function(data) {
-		console.log(data);
 		if (data.h) {
 			recieveCard(data.h.c,data.h.t);
 		}
@@ -77,16 +76,25 @@ function update() {
 			activePlayer=data.p;
 		}
 		cards=data.c;
+		setTimeout(updateStatus,1000);
 	});
+}
+
+function updateLobby() {
 	$.getJSON("http://localhost:3000/lobby?callback=?", function(data) {
+		console.log(data);
 		if (data.p) {
 			updateCurrentPlayers(data.p);
 		}
 		if (data.tv) {
-			updateVotes(data.tv);
+			updateVotes(data.tv,data.ps);
+		}
+		if (data.s==0) {
+			setTimeout(updateLobby,1000);
 		}
 	});
-	setTimeout(update,1000);
 }
 
-update();
+
+updateLobby();
+updateStatus();
