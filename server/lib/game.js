@@ -5,7 +5,7 @@ global.Game = Game;
 function Game()
 {
 	this.playerQueue = [];
-	this.activePlayers = [];
+	this.gamesPlayed = 0;
 
 	this.reset();
 }
@@ -36,6 +36,8 @@ Game.prototype.reset = function() {
 
 	this.round = 0;
 
+	this.activePlayers = [];
+
 	this.curPlayer = 0;
 	this.direction = 1;
 
@@ -46,6 +48,8 @@ Game.prototype.reset = function() {
 
 	this.handsCache = [];
 	this.namesCache = [];
+
+	this.playersWon = 0;
 
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
@@ -144,14 +148,14 @@ Game.prototype.getPlayer = function() {
 		&& this.curPlayer < this.activePlayers.length )
 		return this.activePlayers[this.curPlayer];
 }
-Game.prototype.pollNextPlayer = function() {
+// Game.prototype.pollNextPlayer = function() {
 
-	var poll = this.calculateNextPlayer();
+// 	var poll = this.calculateNextPlayer();
 
-	if(    poll >= 0
-		&& poll < this.activePlayers.length )
-		return this.activePlayers[poll];
-}
+// 	if(    poll >= 0
+// 		&& poll < this.activePlayers.length )
+// 		return this.activePlayers[poll];
+// }
 
 
 Game.prototype.moveToNextPlayer = function() {
@@ -205,15 +209,14 @@ Game.prototype.moveToNextRound = function() {
 			var found = false,
 				player = this.getPlayer();
 
-			for(var i = 0; i < player.hand.size(); i++)
+			for(var i = 0; i < player.hand.length; i++)
 			{
 				if(player.hand[i].t === this.bufferType)
 				{
-					this.found = true;
+					found = true;
 					break;
 				}
 			}
-
 		
 			if( !found )
 				this.acceptDraw();
@@ -244,6 +247,11 @@ Game.prototype.acceptDraw = function() {
 Game.prototype.reverseDirection = function() {
 
 	this.direction *= -1;
+}
+
+Game.prototype.canPlayCard = function(card) {
+
+	return this.discard.canPlayCard( card ) ;
 }
 
 
@@ -293,7 +301,7 @@ Game.prototype.playCard = function(card, color) {
 	}
 
 
-	this.moveToNextRound();
+	return true;
 };
 
 Game.prototype.giveCard = function(player, n) {
