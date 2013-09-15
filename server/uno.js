@@ -42,11 +42,26 @@ require('./lib/player');
 
 
 var players = [],
-    pid = 0,
+    _pid = 0,
 
     game = new Game();
 
 
+
+function getSamePlayer(pid)
+{
+	var player = game.getPlayer();
+
+	if(    player 
+		&& player.id === pid
+		&& !player.onQueue )
+	{
+		player.updateTime();
+		return player;
+	}
+
+	return false;
+}
 
 function respond(res , obj, callback, size)
 {
@@ -167,7 +182,7 @@ app.post('/lobby', function (req, res) {
 		}
 		else
 		{
-			req.session.pid = id = pid++;
+			req.session.pid = id = _pid++;
 			players[id] = player = new Player(name, id);
 
 			game.addPlayer( player );
@@ -222,18 +237,85 @@ app.post('/vote-start', function (req, res) {
 });
 
 
+
+app.get('/accept-draw', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && game.acceptDraw() )
+		{
+			res.writeHead(200);
+			res.end();
+
+			return;
+		}
+	}
+
+	res.writeHead(403);
+	res.end();
+});
+
+app.get('/get-one', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && !cPlayer.hasDrawn )
+		{
+			game.acceptDraw();
+
+			game.giveCard( cPlayer, 1 );
+			cPlayer.hasDrawn = true;
+
+			res.writeHead(200);
+			res.end();
+
+			return;
+		}
+	}
+
+	res.writeHead(403);
+	res.end();
+});
+
+app.get('/skip-turn', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && cPlayer.hasDrawn )
+		{
+			game.acceptDraw();
+			game.moveToNextRound();
+
+			res.writeHead(200);
+			res.end();
+
+			return;
+		}
+	}
+
+	res.writeHead(403);
+	res.end();
+});
+
+
 app.post('/play/:type/:color', function (req, res) {
 
 	if( game.isPlaying() )
 	{
 		var pid = req.session.pid,
-			cPlayer = game.getPlayer();
+			cPlayer = getSamePlayer( pid );
 
-		if(    cPlayer 
-			&& cPlayer.id === pid
-			&& !cPlayer.onQueue )
+		if( cPlayer )
 		{
-			cPlayer.updateTime();
 
 			var type = req.params.type,
 				color = req.params.color;

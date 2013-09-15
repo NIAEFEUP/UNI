@@ -239,8 +239,11 @@ Game.prototype.acceptDraw = function() {
 	{
 		this.giveCard(this.getPlayer(), this.bufferSize);
 		this.bufferSize = 0;
+
+		return true;
 	}
 
+	return false;
 }
 
 
