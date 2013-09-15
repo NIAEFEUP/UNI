@@ -6,6 +6,10 @@ body {
 
 /* Interface */
 
+h1 {
+	text-align:center;
+}
+
 #cardPile {
 	background-color: #7C997A;
 	width: 220px;
@@ -21,10 +25,14 @@ body {
 
 .player {
 	margin:0.5em;
+	padding:0.5em;
+	border:2px solid #7C997A;
+	display:inline-block;
 }
 
 .active {
 	font-weight:bold;
+	background-color:#9CB99A;
 }
 
 /* Cartas */
@@ -137,7 +145,7 @@ Instead of a list of all class selectors,
 you can use the generic selector below, but it's slower:
 [class*="icon-"] {
 */
-.icon-loop, .icon-blocked, .icon-user, .icon-trophy, .icon-wild {
+.icon-loop, .icon-blocked, .icon-user, .icon-trophy, .icon-wild, .icon-hand {
 	font-family: 'icomoon';
 	speak: none;
 	font-style: normal;
@@ -161,4 +169,7 @@ you can use the generic selector below, but it's slower:
 }
 .icon-wild:before {
 	content: "\e004";
+}
+.icon-hand:before {
+	content: "\e006";
 }

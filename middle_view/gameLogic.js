@@ -1,6 +1,8 @@
 var turn=0;
-var activePlayer="";
+var activePlayer=-1;
 var cards=new Array();
+var gameNumber=0;
+var votes=0;
 
 function Card(color,value) {
 	
@@ -20,7 +22,7 @@ function Card(color,value) {
 		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
 		case 11:this.valuetext="+2";break;
 		case 12:this.valuetext="<i class='icon-loop'></i>";break;
-		case 13:this.valuetext="Wild";break;
+		case 13:this.valuetext="<i class='icon-wild'></i>";break;
 		case 14:this.valuetext="+4";break;
 		default:this.valuetext=value;
 	}
@@ -41,18 +43,23 @@ Card.prototype.render = function() {
 		'</div>');
 }
 
-function updateCurrentPlayers(players,cards) {
+function updateCurrentPlayers(players) {
 	$("#currentPlayers").html("");
 	for (x in players) {
 		var active="";
-		if (players[x]==activePlayer) {active=" active";}
+		if (x==activePlayer) {active=" active";}
 		$("#currentPlayers").append(
-			"<span class='player"+active+"'>"
-			+players[x]
-			+((cards && cards.length>x)?(" ("+cards[x]+")"):"")
-			+"</span>"
+			"<div class='player"+active+"'>"
+			+"<i class='icon-user'></i><br/>"
+			+players[x]+"<br/>"
+			+((cards && cards.length>x)?("<i class='icon-hand'></i> "+cards[x]+""):"")
+			+"</div>"
 		);
 	}
+}
+
+function updateVotes(votes) {
+	$("#votes").html("Votos: "+votes);
 }
 
 
@@ -66,14 +73,17 @@ function update() {
 		if (data.h) {
 			recieveCard(data.h.c,data.h.t);
 		}
-		if (data.p) {
+		if (data.p!==undefined) {
 			activePlayer=data.p;
 		}
 		cards=data.c;
 	});
 	$.getJSON("http://localhost:3000/lobby?callback=?", function(data) {
 		if (data.p) {
-			updateCurrentPlayers(data.p)
+			updateCurrentPlayers(data.p);
+		}
+		if (data.tv) {
+			updateVotes(data.tv);
 		}
 	});
 	setTimeout(update,1000);
