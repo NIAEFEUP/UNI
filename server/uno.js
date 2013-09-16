@@ -72,7 +72,7 @@ function getSamePlayer(pid)
 
 function addCrossDomainHeaders(res, req)
 {
-	res.header('Access-Control-Allow-Origin',      '*');
+	res.header('Access-Control-Allow-Origin',      req.headers.origin);
 	res.header('Access-Control-Allow-Methods',     'GET, POST');
 	res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
 	res.header('Access-Control-Allow-Credentials', true);
@@ -81,7 +81,7 @@ function addCrossDomainHeaders(res, req)
 function respondZero(res, req, statusCode, crossDomain)
 {
 	if(    crossDomain === undefined
-		|| crossDomain !== false )
+		|| crossDomain === true )
 		addCrossDomainHeaders(res, req);
 	
 	res.writeHead(statusCode, {'Content-Length': 0});
@@ -105,7 +105,7 @@ function respond(res , req, obj, crossDomain, callback, size)
 		size += len;
 	
 	if(    crossDomain === undefined
-		|| crossDomain !== false )
+		|| crossDomain === true )
 		addCrossDomainHeaders(res, req);
 
 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
@@ -291,7 +291,7 @@ app.get('/status', function (req, res) {
 
 	req.session.lround = game.round ;
 
-	respond(res, req, out, false, req.query.callback);
+	respond(res, req, out, true, req.query.callback);
 
 });
 
@@ -316,7 +316,7 @@ app.get('/lobby', function (req, res) {
 	if( player )
 		player.updateTime();
 
-	respond(res, req, out, false, req.query.callback);
+	respond(res, req, out, true, req.query.callback);
 });
 
 
