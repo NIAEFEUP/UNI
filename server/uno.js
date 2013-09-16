@@ -6,7 +6,7 @@ var express = require('express') ,
 	base = '',
 	port = 3000,
 	deadTimerInterval = 5000,
-	clientTimeout = 60 ;
+	clientTimeout = 600 ;
 
 for(var i = 0; i < args.length; i++)
 {
@@ -34,6 +34,7 @@ app.use(express.session({ key: 'uno',
 						  cookie: { path: '/' }
 						  } ));
 app.use(base, app.router);
+app.enable('trust proxy');
 app.disable('x-powered-by');
 
 
@@ -45,10 +46,14 @@ require('./lib/player');
 
 var players = [],
     _pid = 0,
-
+    adminCode = require('crypto').randomBytes(4).toString('hex');
     game = new Game();
 
 
+
+/***********************************************************************
+ *	Functions
+ ***********************************************************************/
 
 function getSamePlayer(pid)
 {
@@ -63,6 +68,22 @@ function getSamePlayer(pid)
 	}
 
 	return false;
+}
+
+function addCrossDomainHeaders(res)
+{
+	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Access-Control-Allow-Methods', 'POST');
+	res.setHeader('Access-Control-Max-Age', '1000');
+}
+
+function respondZero(res, statusCode)
+{
+	addCrossDomainHeaders(res);
+	
+	res.writeHead(statusCode, {'Content-Length': 0});
+
+	res.end();
 }
 
 function respond(res , obj, callback, size)
@@ -80,236 +101,14 @@ function respond(res , obj, callback, size)
 	else
 		size += len;
 	
+	addCrossDomainHeaders(res);
+
 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
 						'Content-Length': size});
 
 	res.write(out);
 	res.end();
 }
-
-
-app.get('/status', function (req, res) {
-
-	var pid = req.session.pid,
-	    player = ( pid !== undefined ) ? players[pid] : false ;
-
-	if( player )
-		player.updateTime();
-
-	/*if( game.isStopped() )
-	{
-		res.writeHead(204);
-		res.end();
-
-		return;
-	}
-
-	if(    req.session.lround === game.round
-		&& req.query.force !== 'true' )
-	{
-		res.writeHead(304);
-		res.end();
-
-		return;
-	}*/
-
-	var cPlayer = game.getPlayer(),
-	    hand = ( player && !player.onQueue ) ? player.hand : [] ,
-
-	    out = { g: game.gamesPlayed,
-	    		s: game.state,
-	    		r: game.round,
-				t: ( cPlayer && cPlayer.id === pid ) ? true : false , //pq raio em js uma condição não avalia logo para boleano !? tamanha estupidez!
-				p: game.curPlayer ,
-				h: game.discard.head ? game.discard.head : null ,
-				l: hand,
-				c: game.handsCache,
-				b: this.bufferSize };
-
-
-	req.session.lround = game.round ;
-
-	respond(res, out, req.query.callback);
-
-});
-
-
-app.get('/lobby', function (req, res) {
-
-	var out,
-		pid = req.session.pid,
-		player = (pid !== undefined ) ? players[pid] : false ;
-
-
-    out = { g: game.gamesPlayed,
-    		s: game.state,
-			p: game.namesCache,
-			ps: game.activePlayers.length,
-			pl: Game.PLAYER_LIMIT,
-			qs: game.playerQueue.length,
-			q: player ? player.onQueue : null,
-			v: player ? player.startVote : null,
-			tv: game.startVotes };
-
-	if( player )
-		player.updateTime();
-
-	respond(res, out, req.query.callback);
-
-});
-
-
-app.post('/lobby', function (req, res) {
-
-	var player, id = req.session.pid, name = '';
-
-	if(    id !== undefined
-		&& players[id] !== null )
-	{
-		player = players[id];
-		name = player.name;
-
-		if( player )
-			player.updateTime();
-	}
-	else
-	{
-		name = req.body.name ;
-
-		if( !name )
-		{
-			res.writeHead(400);
-			res.end();
-
-			return;
-		}
-		else
-		{
-			req.session.pid = id = _pid++;
-			players[id] = player = new Player(name, id);
-
-			game.addPlayer( player );
-			playerNames = [];
-
-			console.log( 'New client received [' + player.name + ', ' + player.id + ', ' + (!player.onQueue  ? 'OK' : 'Queue') + ']' );
-		}
-	}
-
-	var out = { n: name,
-		  		q: player.onQueue };
-
-	respond(res, out, req.body.callback);
-});
-
-app.post('/vote-start', function (req, res) {
-
-	if( game.isStopped() )
-	{
-		var pid = req.session.pid,
-			player = (pid !== undefined ) ? players[pid] : false ;
-
-		if( player )
-		{
-			player.updateTime();
-
-
-			if(    !player.onQueue
-				&& game.activePlayers.length >= Game.MIN_PALYER )
-			{
-				if( !player.startVote )
-				{
-					player.startVote = true;
-					game.startVotes++;
-
-					console.log("Votes: " + game.startVotes + "/" + game.activePlayers.length );
-
-					if( game.canStart() && game.start() )
-						console.log("Game started");
-
-				}
-
-				res.writeHead(200);
-				res.end();
-
-				return;
-			}
-		}
-	}
-
-	res.writeHead(403);
-	res.end();
-});
-
-
-
-app.get('/accept-draw', function (req, res) {
-
-	if( game.isPlaying() )
-	{
-		var pid = req.session.pid,
-			cPlayer = getSamePlayer( pid );
-
-		if( cPlayer && game.acceptDraw() )
-		{
-			res.writeHead(200);
-			res.end();
-
-			return;
-		}
-	}
-
-	res.writeHead(403);
-	res.end();
-});
-
-app.get('/get-one', function (req, res) {
-
-	if( game.isPlaying() )
-	{
-		var pid = req.session.pid,
-			cPlayer = getSamePlayer( pid );
-
-		if( cPlayer && !cPlayer.hasDrawn )
-		{
-			game.acceptDraw();
-
-			game.giveCard( cPlayer, 1 );
-			cPlayer.hasDrawn = true;
-
-			res.writeHead(200);
-			res.end();
-
-			return;
-		}
-	}
-
-	res.writeHead(403);
-	res.end();
-});
-
-app.get('/skip-turn', function (req, res) {
-
-	if( game.isPlaying() )
-	{
-		var pid = req.session.pid,
-			cPlayer = getSamePlayer( pid );
-
-		if( cPlayer && cPlayer.hasDrawn )
-		{
-			game.acceptDraw();
-			game.moveToNextRound();
-
-			res.writeHead(200);
-			res.end();
-
-			return;
-		}
-	}
-
-	res.writeHead(403);
-	res.end();
-});
-
 
 function checkGameEnded()
 {
@@ -345,85 +144,6 @@ function checkGameEnded()
 
 	return false;
 }
-
-app.post('/play/:type/:color', function (req, res) {
-
-	if( game.isPlaying() )
-	{
-		var pid = req.session.pid,
-			cPlayer = getSamePlayer( pid );
-
-		if( cPlayer )
-		{
-
-			var type = req.params.type,
-				color = req.params.color;
-
-			console.log( "Player '" + cPlayer.name + "' [id: " + cPlayer.id + "] played card of type: " + type + " and color: " + color );
-
-			if(    type !== undefined
-				&& color !== undefined )
-			{
-				type = parseInt(type);
-				color = parseInt(color);
-
-				var i = 0, card, found = false, nextRound = true;
-
-				for(; i < cPlayer.hand.length; i++ )
-				{
-					card = cPlayer.hand[i];
-
-					if(    card.t === type
-						&& (    card.isWild() 
-							 || card.c === color ) )
-					{
-						found = true;
-						break;
-					}
-				}
-
-				if( !found )
-					console.log("Card not found");
-
-				else
-				if( !game.playCard( card, color ) )
-					console.log("Card cannot be played");
-
-				else
-				{
-					cPlayer.hand.splice(i, 1);
-
-					if( cPlayer.hand.length === 0 )
-					{
-						console.log( "Player won");
-
-						cPlayer.reset();
-
-						game.playerQueue.push( cPlayer );
-
-						game.playersOut++;
-
-
-						nextRound = !checkGameEnded();
-					}
-
-					if( nextRound )
-						game.moveToNextRound();
-
-					res.writeHead(200);
-					res.end();
-
-					return;
-				}
-			
-
-			}
-		}
-	}
-
-	res.writeHead(403);
-	res.end();
-});
 
 
 function removeQueuedPlayer(player)
@@ -522,6 +242,304 @@ function removeActivePlayer(player, i)
 	return false;
 }
 
+
+/***********************************************************************
+ *	Routes
+ ***********************************************************************/
+
+app.get('/status', function (req, res) {
+
+	var pid = req.session.pid,
+	    player = ( pid !== undefined ) ? players[pid] : false ;
+
+	if( player )
+		player.updateTime();
+
+	/*if( game.isStopped() )
+	{
+		respondZero(res, 204);
+
+		return;
+	}
+
+	if(    req.session.lround === game.round
+		&& req.query.force !== 'true' )
+	{
+		respondZero(res, 304);
+
+		return;
+	}*/
+
+	var cPlayer = game.getPlayer(),
+	    hand = ( player && !player.onQueue ) ? player.hand : [] ,
+
+	    out = { g: game.gamesPlayed,
+	    		s: game.state,
+	    		r: game.round,
+				t: ( cPlayer && cPlayer.id === pid ) ? true : false , //pq raio em js uma condição não avalia logo para boleano !? tamanha estupidez!
+				p: game.curPlayer ,
+				h: game.discard.head ? game.discard.head : null ,
+				l: hand,
+				c: game.handsCache,
+				b: this.bufferSize };
+
+
+	req.session.lround = game.round ;
+
+	respond(res, out, req.query.callback);
+
+});
+
+
+app.get('/lobby', function (req, res) {
+
+	var out,
+		pid = req.session.pid,
+		player = (pid !== undefined ) ? players[pid] : false ;
+
+
+    out = { g: game.gamesPlayed,
+    		s: game.state,
+			p: game.namesCache,
+			ps: game.activePlayers.length,
+			pl: Game.PLAYER_LIMIT,
+			qs: game.playerQueue.length,
+			q: player ? player.onQueue : null,
+			v: player ? player.startVote : null,
+			tv: game.startVotes };
+
+	if( player )
+		player.updateTime();
+
+	respond(res, out, req.query.callback);
+
+});
+
+
+app.post('/lobby', function (req, res) {
+
+	var player, id = req.session.pid, name = '';
+
+	if(    id !== undefined
+		&& players[id] !== null )
+	{
+		player = players[id];
+		name = player.name;
+
+		if( player )
+			player.updateTime();
+	}
+	else
+	{
+		name = req.body.name ;
+
+		if( !name )
+		{
+			respondZero(res, 400);
+
+			return;
+		}
+		else
+		{
+			req.session.pid = id = _pid++;
+			players[id] = player = new Player(name, id);
+
+			game.addPlayer( player );
+			playerNames = [];
+
+			console.log( 'New client received [' + player.name + ', ' + player.id + ', ' + (!player.onQueue  ? 'OK' : 'Queue') + ']' );
+		}
+	}
+
+	var out = { n: name,
+		  		q: player.onQueue };
+
+	respond(res, out, req.body.callback);
+});
+
+app.post('/vote-start', function (req, res) {
+
+	if( game.isStopped() )
+	{
+		var pid = req.session.pid,
+			player = (pid !== undefined ) ? players[pid] : false ;
+
+		if( player )
+		{
+			player.updateTime();
+
+
+			if(    !player.onQueue
+				&& game.activePlayers.length >= Game.MIN_PLAYER )
+			{
+				if( !player.startVote )
+				{
+					player.startVote = true;
+					game.startVotes++;
+
+					console.log("Votes: " + game.startVotes + "/" + game.activePlayers.length );
+
+					if( game.canStart() && game.start() )
+						console.log("Game started");
+
+				}
+
+				respondZero(res, 200);
+
+				return;
+			}
+		}
+	}
+
+	respondZero(res, 403);
+});
+
+
+
+app.get('/accept-draw', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && game.acceptDraw() )
+		{
+			respondZero(res, 200);
+
+			return;
+		}
+	}
+
+	respondZero(res, 403);
+});
+
+app.get('/get-one', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && !cPlayer.hasDrawn )
+		{
+			game.acceptDraw();
+
+			game.giveCard( cPlayer, 1 );
+			cPlayer.hasDrawn = true;
+
+			respondZero(res, 200);
+
+			return;
+		}
+	}
+
+	respondZero(res, 403);
+});
+
+app.get('/skip-turn', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer && cPlayer.hasDrawn )
+		{
+			game.acceptDraw();
+			game.moveToNextRound();
+
+			respondZero(res, 200);
+
+			return;
+		}
+	}
+
+	respondZero(res, 403);
+});
+
+
+
+
+app.post('/play/:type/:color', function (req, res) {
+
+	if( game.isPlaying() )
+	{
+		var pid = req.session.pid,
+			cPlayer = getSamePlayer( pid );
+
+		if( cPlayer )
+		{
+
+			var type = req.params.type,
+				color = req.params.color;
+
+			console.log( "Player '" + cPlayer.name + "' [id: " + cPlayer.id + "] played card of type: " + type + " and color: " + color );
+
+			if(    type !== undefined
+				&& color !== undefined )
+			{
+				type = parseInt(type);
+				color = parseInt(color);
+
+				var i = 0, card, found = false, nextRound = true;
+
+				for(; i < cPlayer.hand.length; i++ )
+				{
+					card = cPlayer.hand[i];
+
+					if(    card.t === type
+						&& (    card.isWild() 
+							 || card.c === color ) )
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if( !found )
+					console.log("Card not found");
+
+				else
+				if( !game.playCard( card, color ) )
+					console.log("Card cannot be played");
+
+				else
+				{
+					cPlayer.hand.splice(i, 1);
+
+					if( cPlayer.hand.length === 0 )
+					{
+						console.log( "Player won");
+
+						cPlayer.reset();
+
+						game.playerQueue.push( cPlayer );
+
+						game.playersOut++;
+
+
+						nextRound = !checkGameEnded();
+					}
+
+					if( nextRound )
+						game.moveToNextRound();
+
+					respondZero(res, 200);
+
+					return;
+				}
+			
+
+			}
+		}
+	}
+
+	respondZero(res, 403);
+});
+
+
+
 app.delete('/lobby', function (req, res) {
 
 	var pid = req.session.pid,
@@ -562,8 +580,7 @@ app.delete('/lobby', function (req, res) {
 		{
 			console.log( msg + ( queue ? ": removed from queue" : '' ) );
 
-			res.writeHead(200);
-			res.end();
+			respondZero(res, 200);
 
 			return;
 		}
@@ -571,21 +588,105 @@ app.delete('/lobby', function (req, res) {
 		console.log( msg + ": error exiting" );
 	}
 
-	res.writeHead(403);
-	res.end();
+	respondZero(res, 403);
 });
 
 
+
+
+
+
+/***********************************************************************
+ *	Admin
+ ***********************************************************************/
+
+function admLog(req, msg)
+{
+	console.log("[ADM " + req.ip + "] " + msg );
+
+}
+app.post('/adm-login', function (req, res) {
+
+	var logged = req.session.logged,
+		code = req.body.code;
+
+	if(    logged
+		|| (    code
+			 && code === adminCode ) )
+	{
+		req.session.logged = true;
+
+		admLog(req, "Successful login");
+
+		respondZero(res, 200);
+		return;
+	}
+
+	admLog(req, "Bad login");
+
+	respondZero(res, 403);
+});
+
+
+app.post('/adm-logout', function (req, res) {
+
+	var logged = req.session.logged
+
+	if( req.session.logged )
+	{
+		req.session.logged = false;
+
+		admLog(req, "Successful logout");
+
+		respondZero(res, 200);
+		return;
+	}
+
+	respondZero(res, 403);
+});
+
+
+app.post('/adm-give/:player/:count', function (req, res) {
+
+	var id = parseInt(req.params.player),
+		count = parseInt(req.params.count),
+		i,player;
+
+	if(    req.session.logged
+		&& id !== undefined
+		&& count !== undefined
+		&& id >= 0
+		&& id < game.activePlayers.length
+		&& !game.isStopped() )
+	{
+		player = game.activePlayers[id];
+
+		i=game.giveCard(player, count);
+		game.countPlayerCards();
+
+		admLog(req, "Gave player '" + player.name + "' " + i + " cards");
+
+		respondZero(res, 200);
+		return;
+	}
+
+	respondZero(res, 403);
+});
+
+
+
+
+/***********************************************************************
+ *	Start server and dead client timer
+ ***********************************************************************/
 
 
 app.all('*', function (req, res) {
 
 	console.log('Wrong request received: ' + req.path);
 
-	res.writeHead(404, {'Content-Length': 0});
-	res.end();
+	respondZero(res, 404);
 });
-
 
 app.listen(port);
 
@@ -600,7 +701,7 @@ game.startTimer(function(){
 		playing = !game.isStopped();
 	    now = Utils.getTime() - clientTimeout;
 
-	for(i = game.activePlayers.length - 1 ; i >= 0 ; i-- )
+	for( i = game.activePlayers.length - 1 ; i >= 0 ; i-- )
 	{
 		player = game.activePlayers[i];
 
@@ -631,4 +732,6 @@ game.startTimer(function(){
 		game.moveToNextRound();
 
 }, deadTimerInterval);
+
 console.log('Dead client timer started');
+console.log('* Admin code is: ' + adminCode);
