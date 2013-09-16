@@ -1,5 +1,6 @@
 var turn=0;
 var activePlayer=-1;
+var players=new Array();
 var cards=new Array();
 var gameNumber=0;
 var votes=0;
@@ -44,11 +45,11 @@ Card.prototype.render = function() {
 		'</div>');
 }
 
-function updateCurrentPlayers(players) {
+function updateCurrentPlayers() {
 	$("#currentPlayers").html("");
 	for (x in players) {
 		var active="";
-		if (x==activePlayer) {active=" active";}
+		if (gameStatus!=0 && x==activePlayer) {active=" active";}
 		$("#currentPlayers").append(
 			"<div class='player"+active+"'>"
 			+"<i class='icon-user'></i><br/>"
@@ -75,17 +76,17 @@ function updateStatus() {
 		}
 		if (data.p!==undefined) {
 			activePlayer=data.p;
+			updateCurrentPlayers();
 		}
 		cards=data.c;
-		setTimeout(updateStatus,1000);
 	}).always(function() {setTimeout(updateStatus,1000);});
 }
 
 function updateLobby() {
 	$.getJSON("http://localhost:3000/lobby?callback=?", function(data) {
-		console.log(data);
 		if (data.p) {
-			updateCurrentPlayers(data.p);
+			players=data.p;
+			updateCurrentPlayers();
 		}
 		if (data.tv) {
 			updateVotes(data.tv,data.ps);

@@ -264,14 +264,14 @@ app.get('/status', function (req, res) {
 	if( player )
 		player.updateTime();
 
-	/*if( game.isStopped() )
+	if( game.isStopped() )
 	{
 		respondZero(res, req, 204);
 
 		return;
 	}
 
-	if(    req.session.lround === game.round
+/*	if(    req.session.lround === game.round
 		&& req.query.force !== 'true' )
 	{
 		respondZero(res, req, 304);
