@@ -21,7 +21,7 @@ function Card(color,value) {
 	
 	this.color = color;
 	this.value = value;
-	switch(parseInt(color))
+	switch(color)
 	{
 		case 0:this.colortext="Red";break;
 		case 1:this.colortext="Green";break;
@@ -30,7 +30,7 @@ function Card(color,value) {
 		case 4:this.colortext="Wild";break;
 		default:this.colortext="Error";
 	}
-	switch(parseInt(value))
+	switch(value)
 	{
 		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
 		case 11:this.valuetext="+2";break;
@@ -56,9 +56,9 @@ function ParseMao(mao )
 {
 	var htmlstr="";
 	var card;
-	for (var i=0;i< mao.size;i++)
+	for (var i=0;i< mao.length;i++)
 	{
-		card=Card(mao[i].t,mao[i].c);
+		card=new Card(mao[i].c,mao[i].t);
 		htmlstr+=card.html();
 	}
 	return htmlstr;
@@ -116,8 +116,11 @@ function QueryStatus()
 
 					else{
 						active=true;
+						$("#statusmsg").text("É a sua vez");
+						$("#statusmsg").show();		
 
 						$("#cardsdiv").html(ParseMao(data.l));	
+						console.log('done');
 
 					}
 				}
@@ -143,7 +146,6 @@ function QueryStatus()
 
 function QueryLobby()
 {
-	active=false;
 	inlobby=true;
 	$.getJSON(playurl+room+"lobby",{},function(data){
 				
@@ -191,6 +193,28 @@ function QueryLobby()
 	}).always(function(){
 		active=true;
 				if(inlobby) timerfunc=setTimeout(QueryLobby,timerms);	
+	});
+}
+
+function playCard(card){
+	active=false;
+	clearTimeout(timerfunc);
+	color=card.data("color");
+	value=card.data("value");
+	$.post(playurl+room+"play/"+value+"/"+color,{},function(data){
+		//fixe
+		console.log("play sucessefull with "+color+" "+value+" ");
+	},'json').fail(function(jqxhr, textStatus, error ) {
+		var err = textStatus + ', ' + error;
+		console.log( "playRequest with "+color+" "+value+" Failed: " + err);
+		active=true;
+		$("#loading").hide();
+		$('#lobbyerrormsg').text("Erro a comunicar jogada. Por favor tente outra vez.");
+		$('#lobbyerrormsg').show();
+		$('#lobby').show();
+	}).always(function(){
+		active=true;
+		QueryStatus();
 	});
 }
 
@@ -280,10 +304,12 @@ $(document).ready(function() {
 	
 	$(document).on('click','.card',function(event){
 		if (active==true&&gameactive==true){	
-			
+			playCard($(this));
 		}
 		console.log($(this).data("color")+" "+$(this).data("value")+" "+active);
 	});
+	
+	
 	
 	$("#readycheck").click(function(){
 		if (active==true){
@@ -358,7 +384,7 @@ $(document).ready(function() {
 	
 	$("#exitbtn").click(function(){
 		if (active==true){
-			
+			active=false;
 		$.post(playurl+room+"quit",function(data){
 				active=true;
 				ingame=false;
@@ -369,7 +395,7 @@ $(document).ready(function() {
 				$("#statusmsg").hide();
 				$("#lobby").show();
 				$("#lobbyerrormsg").hide();
-				
+				$("#cardsdiv").html("");
 				});
 		}
 		

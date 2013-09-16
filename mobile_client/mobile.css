@@ -18,8 +18,10 @@
 	font-size:12pt;
 	padding:10px;
 	text-align:center;
+	display:block;
+	float:left;
 	margin:0px;
-	
+	width:100%;
 }
 /*card CSS*/
 div.card,div.buttondiv{
