@@ -271,13 +271,13 @@ app.get('/status', function (req, res) {
 		return;
 	}
 
-	if(    req.session.lround === game.round
+/*	if(    req.session.lround === game.round
 		&& req.query.force !== 'true' )
 	{
 		respondZero(res, req, 304);
 
 		return;
-	}
+	}*/
 
 	var cPlayer = game.getPlayer(),
 	    hand = ( player && !player.onQueue ) ? player.hand : [] ,
