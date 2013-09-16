@@ -6,7 +6,7 @@ var express = require('express') ,
 	base = '',
 	port = 3000,
 	deadTimerInterval = 5000,
-	clientTimeout = 600 ;
+	clientTimeout = 60 ;
 
 for(var i = 0; i < args.length; i++)
 {
@@ -683,7 +683,7 @@ app.post('/adm-give/:player/:count', function (req, res) {
 
 app.all('*', function (req, res) {
 
-	console.log('Wrong request received: ' + req.path);
+	console.log('Wrong request received: ' + req.path + " [" + req.method + "]");
 
 	respondZero(res, 404);
 });
