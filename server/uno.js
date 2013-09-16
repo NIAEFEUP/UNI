@@ -73,7 +73,7 @@ function getSamePlayer(pid)
 function addCrossDomainHeaders(res)
 {
 	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Methods', 'POST');
+	res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
 	res.setHeader('Access-Control-Max-Age', '1000');
 }
 
@@ -539,7 +539,9 @@ app.post('/play/:type/:color', function (req, res) {
 });
 
 
-
+app.options('/lobby', function (req, res) {
+	respondZero(res, 200);
+});
 app.delete('/lobby', function (req, res) {
 
 	var pid = req.session.pid,
