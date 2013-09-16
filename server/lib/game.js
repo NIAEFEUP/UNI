@@ -5,7 +5,7 @@ global.Game = Game;
 function Game()
 {
 	this.playerQueue = [];
-	this.activePlayers = [];
+	this.gamesPlayed = 0;
 
 	this.reset();
 }
@@ -13,7 +13,11 @@ function Game()
 Game.STATE = {
 	STOP	: 0,
 	PLAYING	: 1,
+	PAUSED	: 2,
 }
+
+Game.PLAYER_LIMIT = 10;
+Game.MIN_PALYER = 2;
 
 Game.isColorValid = function(color) {
 
@@ -33,11 +37,20 @@ Game.prototype.reset = function() {
 
 	this.round = 0;
 
+	this.activePlayers = [];
+
 	this.curPlayer = 0;
 	this.direction = 1;
 
 	this.bufferType = -1;
 	this.bufferSize = 0;
+
+	this.startVotes = 0;
+
+	this.handsCache = [];
+	this.namesCache = [];
+
+	this.playersOut = 0;
 
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
@@ -45,15 +58,51 @@ Game.prototype.reset = function() {
 	this.state = Game.STATE.STOP;
 }
 
+Game.prototype.isStopped = function() {
+
+	return this.state === Game.STATE.STOP ;
+}
 Game.prototype.isPlaying = function() {
 
 	return this.state === Game.STATE.PLAYING ;
 }
 
+
+
+Game.prototype.canStart = function() {
+
+	return     this.isStopped()
+			&& this.activePlayers.length >= Game.MIN_PALYER
+			&& this.startVotes === this.activePlayers.length ;
+}
+
+
+Game.prototype.start = function() {
+
+	if( !this.isStopped() )
+		return false;
+
+	this.deck.shuffle();
+	Utils.arrayShuffle(this.activePlayers);
+	this.buildPlayerNamesCache();
+
+	for(var i = 0; i < this.activePlayers.length; i++ )
+		this.giveCard( this.activePlayers[i], 7 );
+
+	//TODO: carta da mesa
+
+	this.countPlayerCards();
+
+	this.state = Game.STATE.PLAYING;
+
+	return true;
+}
+
+
 Game.prototype.canAddPlayer = function() {
 
-	return     !this.isPlaying()
-			&& this.activePlayers.length < 15 ;
+	return     this.isStopped()
+			&& this.activePlayers.length < Game.PLAYER_LIMIT ;
 
 }
 
@@ -62,19 +111,24 @@ Game.prototype.addPlayer = function(player) {
 	if(    player instanceof Player
 		&& player.id >= 0 )
 	{
-		if( !this.canAddPlayer() )
-		{
-			player.onQueue = true;
-			this.playerQueue.push( player );
-		}
-		else
+		player.reset();
+
+		if( this.canAddPlayer() )
 		{
 			player.onQueue = false;
 			this.activePlayers.push( player );
 
+			for(var i = 0; i < this.activePlayers.length; i++ )
+				this.activePlayers[i].startVote = false;
+
+			this.startVotes = 0;
+
+			this.buildPlayerNamesCache();
+
 			return true;
 		}
-			
+		else
+			this.playerQueue.push( player );
 	}
 
 	return false;
@@ -91,29 +145,57 @@ Game.prototype.calculateNextPlayer = function() {
 
 Game.prototype.getPlayer = function() {
 
-	if(    this.curPlayer > 0
+	if(    this.curPlayer >= 0
 		&& this.curPlayer < this.activePlayers.length )
 		return this.activePlayers[this.curPlayer];
 }
-Game.prototype.pollNextPlayer = function() {
+// Game.prototype.pollNextPlayer = function() {
 
-	var poll = this.calculateNextPlayer();
+// 	var poll = this.calculateNextPlayer();
 
-	if(    poll > 0
-		&& poll < this.activePlayers.length )
-		return this.activePlayers[poll];
-}
+// 	if(    poll >= 0
+// 		&& poll < this.activePlayers.length )
+// 		return this.activePlayers[poll];
+// }
 
 
 Game.prototype.moveToNextPlayer = function() {
 
 	if( this.isPlaying() )
 	{
-		this.curPlayer = this.calculateNextPlayer();
-		this.getPlayer().hasDrawn = false;
+		var i,player;
+
+		for(i = 0; i < this.activePlayers.length; i++ )
+		{
+			this.curPlayer = this.calculateNextPlayer();
+			player = this.getPlayer();
+
+			if( player && player.hand.length > 0 )
+			{
+				player.hasDrawn = false;
+
+				break;
+			}
+		}
 	}
 }
 
+
+Game.prototype.countPlayerCards = function() {
+
+	this.handsCache = [];
+	
+	for( var i = 0; i < this.activePlayers.length; i++ )
+		this.handsCache.push( this.activePlayers[i].hand.length )
+}
+
+Game.prototype.buildPlayerNamesCache = function() {
+
+	this.namesCache = [];
+	
+	for( var i = 0; i < this.activePlayers.length; i++ )
+		this.namesCache.push( this.activePlayers[i].name )
+}
 
 
 Game.prototype.moveToNextRound = function() {
@@ -125,24 +207,27 @@ Game.prototype.moveToNextRound = function() {
 
 		if( this.bufferSize > 0 )
 		{
-			var i,found = false,
+			var found = false,
 				player = this.getPlayer();
 
-			for(i = 0; i < player.hand.size(); i++)
+			for(var i = 0; i < player.hand.length; i++)
 			{
 				if(player.hand[i].t === this.bufferType)
 				{
-					this.found = true;
+					found = true;
 					break;
 				}
 			}
-
 		
 			if( !found )
 				this.acceptDraw();
 		}
+
+
+		this.countPlayerCards();
 	}
 }
+
 
 Game.prototype.canSkipPlay = function() {
 
@@ -155,14 +240,22 @@ Game.prototype.acceptDraw = function() {
 	{
 		this.giveCard(this.getPlayer(), this.bufferSize);
 		this.bufferSize = 0;
+
+		return true;
 	}
 
+	return false;
 }
 
 
 Game.prototype.reverseDirection = function() {
 
 	this.direction *= -1;
+}
+
+Game.prototype.canPlayCard = function(card) {
+
+	return this.discard.canPlayCard( card ) ;
 }
 
 
@@ -195,7 +288,10 @@ Game.prototype.playCard = function(card, color) {
 
 		case Card.TYPE.REVERSE:
 			
-			this.reverseDirection();
+			if( ( this.activePlayers - this.playersOut ) === 2 )
+				this.moveToNextPlayer();
+			else
+				this.reverseDirection();
 			break;
 
 		case Card.TYPE.DRAW2:
@@ -212,9 +308,7 @@ Game.prototype.playCard = function(card, color) {
 	}
 
 
-
-	this.moveToNextPlayer();
-
+	return true;
 };
 
 Game.prototype.giveCard = function(player, n) {
@@ -247,4 +341,25 @@ Game.prototype.giveCard = function(player, n) {
 	}
 
 	return r;
+}
+
+
+
+
+
+
+Game.prototype.startTimer = function(callback, time) {
+
+	var game = this,
+		_check = function() {
+
+		callback();
+
+		setTimeout(_check, time);
+	};
+
+	setTimeout(function(){
+		_check();
+	}, time);
+
 }

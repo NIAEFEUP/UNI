@@ -5,29 +5,36 @@ global.Player = Player;
 
 
 
-function getTime()
-{
-	return ( new Date() / 1000 ) | 0 ;
-}
-
-
 
 function Player(name, id) {
 	this.name = name;
 	this.id = id;
-	this.hand = [];
-	this.hasDrawn = false;
-	this.onQueue = false;
+
+
+	this.reset();
 
 	this.updateTime();
 }
 
 
+Player.prototype.reset = function() {
+
+	this.hand = [];
+	this.hasDrawn = false;
+	this.onQueue = true;
+	this.startVote = false;
+}
+
+
 
 Player.prototype.updateTime = function() {
-	this._time = getTime();
+	this._time = Utils.getTime();
 }
 
-Player.prototype.isTimeValid = function(secs) {
-	return this._time >= ( getTime() - secs ) ;
-}
+// Player.prototype.isTimeValid = function(secs) {
+	
+// 	if( t === undefined )
+// 		t = Utils.getTime() ;
+
+// 	return this._time >= ( t - secs ) ;
+// }
