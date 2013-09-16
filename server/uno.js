@@ -73,7 +73,8 @@ function getSamePlayer(pid)
 function addCrossDomainHeaders(res)
 {
 	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Methods', 'POST, DELETE, OPTIONS');
+	res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+	res.setHeader('Access-Control-Allow-Headers', 'Cookie');
 	res.setHeader('Access-Control-Max-Age', '1000');
 }
 
@@ -539,10 +540,15 @@ app.post('/play/:type/:color', function (req, res) {
 });
 
 
+<<<<<<< HEAD
 app.options('/lobby', function (req, res) {
 	respondZero(res, 200);
 });
 app.delete('/lobby', function (req, res) {
+=======
+
+app.post('/quit', function (req, res) {
+>>>>>>> 5708a7faf4bf59cbdd25b023fbb3e48cf867a2d6
 
 	var pid = req.session.pid,
 		player = players[pid],p,
