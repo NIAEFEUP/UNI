@@ -4,9 +4,12 @@ var playerName="";
 var status;
 var active=false;
 var inqueue=true;
-var gamestarted=false;
+var gameactive=false;
 var drawbuffer=false;
 var readychecked=false;
+var inlobby=false;
+var ingame=false;
+var timerfunc;
 var callback="?callback=?";
 
 
@@ -44,12 +47,42 @@ Card.prototype.html = function() {
 			'</div>';
 }
 
+
+function ParseMao(mao )
+{
+	var htmlstr="";
+	var card;
+	for (var i=0;i< mao.size;i++)
+	{
+		card=Card(mao[i].t,mao[i].c);
+		htmlstr+=card.html;
+	}
+	return htmlstr;
+}
+
 function QueryStatus()
 {
-	var ingame=true;
-	$.getJSON(playurl+room+"status",{},function(data){
+	ingame=true;
+	$.getJSON(playurl+room+"status"+callback,{},function(data){
 				
-				
+		if (data.s==0||data.t==false)
+		{
+			active=false;
+			if (data.t==false)
+			{
+			$("#statusmsg").text("À espera da sua vez");
+			$("#statusmsg").show();		
+			}
+			else
+			{
+				$("#statusmsg").text("Jogo pausado");
+				$("#statusmsg").show();		
+			}
+		}	
+		else{
+			active=true;
+			$("#cardsdiv").html(ParseMao(data.l));	
+		}
 			
 		},'json').fail(
 		function(jqxhr, textStatus, error ) {
@@ -60,20 +93,24 @@ function QueryStatus()
 			$("#statusmsg").show();		
 	}).always(function(){
 		
-				if(ingame) setTimeout(QueryStatus,1000);	
+				if(ingame) timerfunc=setTimeout(QueryStatus,1000);	
 	});
 }
 
 function QueryLobby()
 {
-	var inlobby=true;
-	$.getJSON(playurl+room+"lobby",{},function(data){
+	$.ajaxSetup({
+		xhrFields: {
+		withCredentials: true
+		}
+	});
+	inlobby=true;
+	$.getJSON(playurl+room+"lobby"+callback,{},function(data){
 				
 				active=true;
 				console.log("sucesso querylobby "+JSON.stringify(data));
 				
 				
-				console.log(data.q);
 				if (data.q==false)
 				{
 					inqueue=false;
@@ -91,6 +128,7 @@ function QueryLobby()
 						if (data.s==1)
 						{
 							inlobby=false;
+							gameactive=true;
 							QueryStatus();
 						}
 						
@@ -108,13 +146,11 @@ function QueryLobby()
 			var err = textStatus + ', ' + error;
 			console.log( "lobbyRequest Failed: " + err);
 			active=true;
-			$("#statusmsg").tex/vote-start
-
-t("Falha a comunicar com o servidor para atualizar o estado");
+			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o estado");
 			$("#statusmsg").show();		
 	}).always(function(){
 		
-				if(inlobby) setTimeout(QueryLobby,1000);	
+				if(inlobby) timerfunc=setTimeout(QueryLobby,1000);	
 	});
 }
 
@@ -207,7 +243,7 @@ $(document).ready(function() {
 	});*/
 	
 	$("#drawcard").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -230,7 +266,7 @@ $(document).ready(function() {
 	
 	
 	$(document).on('click','.card',function(event){
-		if (active==true){	
+		if (active==true&&gameactive==true){	
 			
 		}
 		console.log($(this).data("color")+" "+$(this).data("value")+" "+active);
@@ -258,7 +294,7 @@ $(document).ready(function() {
 	});
 	
 	$("#skipturn").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -283,7 +319,7 @@ $(document).ready(function() {
 	});
 	
 	$("#acceptdraw").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -310,14 +346,20 @@ $(document).ready(function() {
 	$("#exitbtn").click(function(){
 		if (active==true){
 			
-		$.ajax({type:'DELETE',url:playurl+"lobby",done:function(data){
+		$.post(playurl+"quit",function(data){
 				active=true;
+				ingame=false;
+				inlobby=false;
+				clearTimeout(timerfunc);
 				console.log("sucesso sair");
 				$("#game").hide();
 				$("#statusmsg").hide();
 				$("#lobby").show();
-				}});
+				$("#lobbyerrormsg").hide();
+				
+				});
 		}
+		
 		console.log("exitbtn "+active);
 		
 	});

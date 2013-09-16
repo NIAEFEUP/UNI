@@ -70,26 +70,26 @@ function getSamePlayer(pid)
 	return false;
 }
 
-function addCrossDomainHeaders(res)
+function addCrossDomainHeaders(res, req)
 {
-	res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
-	res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-	//res.setHeader('Access-Control-Allow-Headers', 'Cookie');
-	res.setHeader('Access-Control-Allow-Credentials', true);
-	res.setHeader('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-	//res.setHeader('Access-Control-Max-Age', '1000');
+	res.header('Access-Control-Allow-Origin',      'http://localhost');
+	res.header('Access-Control-Allow-Methods',     'GET, POST');
+	res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+	res.header('Access-Control-Allow-Credentials', true);
 }
 
-function respondZero(res, statusCode)
+function respondZero(res, req, statusCode, crossDomain)
 {
-	addCrossDomainHeaders(res);
+	if(    crossDomain === undefined
+		|| crossDomain !== false )
+		addCrossDomainHeaders(res, req);
 	
 	res.writeHead(statusCode, {'Content-Length': 0});
 
 	res.end();
 }
 
-function respond(res , obj, callback, size)
+function respond(res , req, obj, crossDomain, callback, size)
 {
 	var out = JSON.stringify(obj),
 		len;
@@ -104,7 +104,9 @@ function respond(res , obj, callback, size)
 	else
 		size += len;
 	
-	addCrossDomainHeaders(res);
+	if(    crossDomain === undefined
+		|| crossDomain !== false )
+		addCrossDomainHeaders(res, req);
 
 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
 						'Content-Length': size});
@@ -260,7 +262,7 @@ app.get('/status', function (req, res) {
 
 	/*if( game.isStopped() )
 	{
-		respondZero(res, 204);
+		respondZero(res, req, 204);
 
 		return;
 	}
@@ -268,7 +270,7 @@ app.get('/status', function (req, res) {
 	if(    req.session.lround === game.round
 		&& req.query.force !== 'true' )
 	{
-		respondZero(res, 304);
+		respondZero(res, req, 304);
 
 		return;
 	}*/
@@ -289,7 +291,7 @@ app.get('/status', function (req, res) {
 
 	req.session.lround = game.round ;
 
-	respond(res, out, req.query.callback);
+	respond(res, req, out, false, req.query.callback);
 
 });
 
@@ -314,8 +316,7 @@ app.get('/lobby', function (req, res) {
 	if( player )
 		player.updateTime();
 
-	respond(res, out, req.query.callback);
-
+	respond(res, req, out, false, req.query.callback);
 });
 
 
@@ -338,7 +339,7 @@ app.post('/lobby', function (req, res) {
 
 		if( !name )
 		{
-			respondZero(res, 400);
+			respondZero(res, req, 400);
 
 			return;
 		}
@@ -357,7 +358,7 @@ app.post('/lobby', function (req, res) {
 	var out = { n: name,
 		  		q: player.onQueue };
 
-	respond(res, out, req.body.callback);
+	respond(res, req, out, true, req.body.callback);
 });
 
 app.post('/vote-start', function (req, res) {
@@ -387,14 +388,14 @@ app.post('/vote-start', function (req, res) {
 
 				}
 
-				respondZero(res, 200);
+				respondZero(res, req, 200);
 
 				return;
 			}
 		}
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 
@@ -408,13 +409,13 @@ app.get('/accept-draw', function (req, res) {
 
 		if( cPlayer && game.acceptDraw() )
 		{
-			respondZero(res, 200);
+			respondZero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 app.get('/get-one', function (req, res) {
@@ -431,13 +432,13 @@ app.get('/get-one', function (req, res) {
 			game.giveCard( cPlayer, 1 );
 			cPlayer.hasDrawn = true;
 
-			respondZero(res, 200);
+			respondZero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 app.get('/skip-turn', function (req, res) {
@@ -452,13 +453,13 @@ app.get('/skip-turn', function (req, res) {
 			game.acceptDraw();
 			game.moveToNextRound();
 
-			respondZero(res, 200);
+			respondZero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 
@@ -528,7 +529,7 @@ app.post('/play/:type/:color', function (req, res) {
 					if( nextRound )
 						game.moveToNextRound();
 
-					respondZero(res, 200);
+					respondZero(res, req, 200);
 
 					return;
 				}
@@ -538,7 +539,7 @@ app.post('/play/:type/:color', function (req, res) {
 		}
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 
@@ -584,7 +585,7 @@ app.post('/quit', function (req, res) {
 		{
 			console.log( msg + ( queue ? ": removed from queue" : '' ) );
 
-			respondZero(res, 200);
+			respondZero(res, req, 200);
 
 			return;
 		}
@@ -592,7 +593,7 @@ app.post('/quit', function (req, res) {
 		console.log( msg + ": error exiting" );
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403);
 });
 
 
@@ -622,13 +623,13 @@ app.post('/adm-login', function (req, res) {
 
 		admLog(req, "Successful login");
 
-		respondZero(res, 200);
+		respondZero(res, req, 200, false);
 		return;
 	}
 
 	admLog(req, "Bad login");
 
-	respondZero(res, 403);
+	respondZero(res, req, 403, false);
 });
 
 
@@ -642,11 +643,11 @@ app.post('/adm-logout', function (req, res) {
 
 		admLog(req, "Successful logout");
 
-		respondZero(res, 200);
+		respondZero(res, req, 200, false);
 		return;
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403, false);
 });
 
 
@@ -670,11 +671,11 @@ app.post('/adm-give/:player/:count', function (req, res) {
 
 		admLog(req, "Gave player '" + player.name + "' " + i + " cards");
 
-		respondZero(res, 200);
+		respondZero(res, req, 200, false);
 		return;
 	}
 
-	respondZero(res, 403);
+	respondZero(res, req, 403, false);
 });
 
 
@@ -689,7 +690,7 @@ app.all('*', function (req, res) {
 
 	console.log('Wrong request received: ' + req.path + " [" + req.method + "]");
 
-	respondZero(res, 404);
+	respondZero(res, req, 404, false);
 });
 
 app.listen(port);
