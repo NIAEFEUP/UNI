@@ -73,7 +73,8 @@ function getSamePlayer(pid)
 function addCrossDomainHeaders(res)
 {
 	res.setHeader('Access-Control-Allow-Origin', '*');
-	res.setHeader('Access-Control-Allow-Methods', 'POST');
+	res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+	res.setHeader('Access-Control-Allow-Headers', 'Cookie');
 	res.setHeader('Access-Control-Max-Age', '1000');
 }
 
