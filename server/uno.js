@@ -6,7 +6,8 @@ var express = require('express') ,
 	base = '',
 	port = 3000,
 	deadTimerInterval = 5000,
-	clientTimeout = 60 ;
+	clientTimeout = 60,
+	allowCrossDomain = true;
 
 for(var i = 0; i < args.length; i++)
 {
@@ -72,10 +73,13 @@ function getSamePlayer(pid)
 
 function addCrossDomainHeaders(res, req)
 {
-	res.header('Access-Control-Allow-Origin',      req.headers.origin);
-	res.header('Access-Control-Allow-Methods',     'GET, POST');
-	res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-	res.header('Access-Control-Allow-Credentials', true);
+	if( allowCrossDomain )
+	{
+		res.header('Access-Control-Allow-Origin',      req.headers.origin);
+		res.header('Access-Control-Allow-Methods',     'GET, POST');
+		res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+		res.header('Access-Control-Allow-Credentials', true);
+	}
 }
 
 function respondZero(res, req, statusCode, crossDomain)

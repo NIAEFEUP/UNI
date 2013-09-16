@@ -4,8 +4,12 @@ var playerName="";
 var status;
 var active=false;
 var inqueue=true;
-var gamestarted=false;
+var gameactive=false;
 var drawbuffer=false;
+var readychecked=false;
+var inlobby=false;
+var ingame=false;
+var timerfunc;
 var callback="?callback=?";
 
 
@@ -43,21 +47,70 @@ Card.prototype.html = function() {
 			'</div>';
 }
 
+
+function ParseMao(mao )
+{
+	var htmlstr="";
+	var card;
+	for (var i=0;i< mao.size;i++)
+	{
+		card=Card(mao[i].t,mao[i].c);
+		htmlstr+=card.html;
+	}
+	return htmlstr;
+}
+
 function QueryStatus()
 {
-
+	ingame=true;
+	$.getJSON(playurl+room+"status"+callback,{},function(data){
+				
+		if (data.s==0||data.t==false)
+		{
+			active=false;
+			if (data.t==false)
+			{
+			$("#statusmsg").text("À espera da sua vez");
+			$("#statusmsg").show();		
+			}
+			else
+			{
+				$("#statusmsg").text("Jogo pausado");
+				$("#statusmsg").show();		
+			}
+		}	
+		else{
+			active=true;
+			$("#cardsdiv").html(ParseMao(data.l));	
+		}
+			
+		},'json').fail(
+		function(jqxhr, textStatus, error ) {
+			var err = textStatus + ', ' + error;
+			console.log( "statusRequest Failed: " + err);
+			active=true;
+			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o jogo");
+			$("#statusmsg").show();		
+	}).always(function(){
+		
+				if(ingame) timerfunc=setTimeout(QueryStatus,1000);	
+	});
 }
 
 function QueryLobby()
 {
-	var inlobby=true;
-	$.getJSON(playurl+room+"lobby",{},function(data){
+	$.ajaxSetup({
+		xhrFields: {
+		withCredentials: true
+		}
+	});
+	inlobby=true;
+	$.getJSON(playurl+room+"lobby"+callback,{},function(data){
 				
 				active=true;
 				console.log("sucesso querylobby "+JSON.stringify(data));
 				
 				
-				console.log(data.q);
 				if (data.q==false)
 				{
 					inqueue=false;
@@ -69,12 +122,13 @@ function QueryLobby()
 					}
 					else{
 						readychecked=true;
-						$("#statusmsg").text("à espera dos outros jogadores");
+						$("#statusmsg").text("À espera dos outros jogadores");
 						$("#statusmsg").show();
 						$("#readycheck").hide();
 						if (data.s==1)
 						{
 							inlobby=false;
+							gameactive=true;
 							QueryStatus();
 						}
 						
@@ -96,7 +150,7 @@ function QueryLobby()
 			$("#statusmsg").show();		
 	}).always(function(){
 		
-				if(inlobby) setTimeout(QueryLobby,10000);	
+				if(inlobby) timerfunc=setTimeout(QueryLobby,1000);	
 	});
 }
 
@@ -104,6 +158,11 @@ $(document).ready(function() {
 	
 	
 	
+	$.ajaxSetup({
+		xhrFields: {
+		withCredentials: true
+		}
+	});
 	
 	$("#gamejoin").click(function(){
 
@@ -184,7 +243,7 @@ $(document).ready(function() {
 	});*/
 	
 	$("#drawcard").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -207,7 +266,7 @@ $(document).ready(function() {
 	
 	
 	$(document).on('click','.card',function(event){
-		if (active==true){	
+		if (active==true&&gameactive==true){	
 			
 		}
 		console.log($(this).data("color")+" "+$(this).data("value")+" "+active);
@@ -215,31 +274,27 @@ $(document).ready(function() {
 	
 	$("#readycheck").click(function(){
 		if (active==true){
+			active=false;	
+		
+			$.post(playurl+room+"vote-start",{
+			},function(data){
+				$("#readycheck").hide();
+				$("#statusmsg").text("À espera dos outros jogadores");
+				$("#statusmsg").show();
+							
+			}).fail(
+			function(){
 			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+			}).always(function(){
+				active=true;
+			});
 		}
 		console.log("readycheck "+active);
 		
 	});
 	
 	$("#skipturn").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -264,7 +319,7 @@ $(document).ready(function() {
 	});
 	
 	$("#acceptdraw").click(function(){
-		if (active==true){
+		if (active==true&&gameactive==true){
 			
 		/*
 		$.post(playurl,{//args
@@ -291,21 +346,27 @@ $(document).ready(function() {
 	$("#exitbtn").click(function(){
 		if (active==true){
 			
-		$.ajax({type:'DELETE',url:playurl+"lobby",done:function(data){
+		$.post(playurl+"quit",function(data){
 				active=true;
+				ingame=false;
+				inlobby=false;
+				clearTimeout(timerfunc);
 				console.log("sucesso sair");
 				$("#game").hide();
 				$("#statusmsg").hide();
 				$("#lobby").show();
-				}});
+				$("#lobbyerrormsg").hide();
+				
+				});
 		}
+		
 		console.log("exitbtn "+active);
 		
 	});
 	
 	active=true; //ativar os campos
 	
-	/*teste*/
+	//teste
 	/*$("#lobby").hide();
 	$("#game").show();
 	var c1=new Card("0","11");
@@ -328,7 +389,8 @@ $(document).ready(function() {
 	$("#cardsdiv").append(c2.html());
 	$("#cardsdiv").append(c3.html());
 	$("#cardsdiv").append(c4.html());
-	$("#cardsdiv").append(c5.html());*/
+	$("#cardsdiv").append(c5.html());
+	*/
 });
 
 

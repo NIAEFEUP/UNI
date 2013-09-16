@@ -29,7 +29,7 @@ div.card,div.buttondiv{
 	text-align: center;
 	width:12%;
 	height:160px;
-	min-width:70px;
+	min-width:75px;
 	max-width:140px;
 	line-height:140px;
 	padding:5px;
@@ -43,11 +43,21 @@ div.card,div.buttondiv{
 	border:1px black solid;
 }
 
-#drawcard{
+div.buttondiv{
+	font-size:16pt;
+}
+
+div.buttondiv span{
+	line-height:18pt;
+	display: inline-block;
+  	vertical-align: middle;
+}
+
+/*#drawcard{
 	line-height:1;
 	padding-top:30px;
 	
-}
+}*/
 
 div.card>div{
 	height:100%;
