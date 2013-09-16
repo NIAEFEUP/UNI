@@ -244,23 +244,13 @@ $(document).ready(function() {
 	$("#exitbtn").click(function(){
 		if (active==true){
 			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+		$.ajax({type:'DELETE',url:playurl+"lobby",done:function(data){
+				active=true;
+				console.log("sucesso sair");
+				$("#game").hide();
+				$("#statusmsg").hide();
+				$("#lobby").show();
+				}});
 		}
 		console.log("exitbtn "+active);
 		
