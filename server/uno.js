@@ -540,7 +540,7 @@ app.post('/play/:type/:color', function (req, res) {
 
 
 
-app.delete('/lobby', function (req, res) {
+app.post('/quit', function (req, res) {
 
 	var pid = req.session.pid,
 		player = players[pid],p,
