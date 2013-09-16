@@ -7,17 +7,18 @@ var votes=0;
 var gameStatus=0;
 
 function Card(color,value) {
-	
+	console.log(color);
+	console.log(value);
 	this.color = color;
 	this.value = value;
 	switch(parseInt(color))
 	{
-		case 0:this.colortext="Red";break;
-		case 1:this.colortext="Green";break;
-		case 2:this.colortext="Blue";break;
-		case 3:this.colortext="Yellow";break;
-		case 4:this.colortext="Wild";break;
-		default:this.colortext="Error";
+		case 0:this.color="red";break;
+		case 1:this.color="green";break;
+		case 2:this.color="blue";break;
+		case 3:this.color="yellow";break;
+		case 4:this.color="wild";break;
+		default:this.color="error";
 	}
 	switch(parseInt(value))
 	{
@@ -61,7 +62,12 @@ function updateCurrentPlayers() {
 }
 
 function updateVotes(votes,players) {
-	$("#votes").html("Votos: "+votes+"/"+players);
+	if (votes<players) {
+		$("#votes").html("Votos: "+votes+"/"+players);
+	}
+	else if (votes==players) {
+		$("#votes").html("");
+	}
 }
 
 
@@ -87,8 +93,6 @@ function updateLobby() {
 		if (data.p) {
 			players=data.p;
 			updateCurrentPlayers();
-		}
-		if (data.tv) {
 			updateVotes(data.tv,data.ps);
 		}
 		gameStatus=data.s;

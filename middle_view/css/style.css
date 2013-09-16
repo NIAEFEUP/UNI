@@ -23,6 +23,11 @@ h1 {
 }
 
 
+#votes {
+	text-align:center;
+}
+
+
 .player {
 	margin:0.5em;
 	padding:0.5em;
