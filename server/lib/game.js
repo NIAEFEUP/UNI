@@ -55,7 +55,7 @@ Game.prototype.reset = function() {
 	this.deck = new Deck();
 	this.discard = new DiscardPile();
 
-	this.state = Game.STATE.PLAYING;
+	this.state = Game.STATE.STOP;
 }
 
 Game.prototype.isStopped = function() {
