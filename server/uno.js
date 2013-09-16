@@ -315,7 +315,6 @@ function checkGameEnded()
 {
 	if( ( game.playersOut + 1 ) >= game.activePlayers.length )
 	{
-		
 		game.moveToNextPlayer();
 		var player = game.getPlayer();
 
@@ -406,32 +405,6 @@ app.post('/play/:type/:color', function (req, res) {
 
 
 						nextRound = !checkGameEnded();
-
-						// if( ( game.playersOut + 1 ) >= game.activePlayers.length )
-						// {
-						// 	console.log( "Game ended" );
-
-						// 	game.moveToNextPlayer();
-						// 	var player = game.getPlayer();
-
-						// 	if( !player.onQueue )
-						// 		game.playerQueue.push( player );
-
-						// 	player = undefined;
-
-						// 	game.reset();
-						// 	game.gamesPlayed++;
-
-						// 	nextRound = false;
-
-						// 	for( var j = 0; j < Game.PLAYER_LIMIT && j < game.playerQueue.length ; j++ )
-						// 	{
-						// 		player = game.playerQueue.shift();
-
-						// 		if( player )
-						// 			game.addPlayer( player );
-						// 	}
-						// }
 					}
 
 					if( nextRound )
@@ -453,6 +426,158 @@ app.post('/play/:type/:color', function (req, res) {
 });
 
 
+function removeQueuedPlayer(player)
+{
+	if(    player
+		&& player instanceof Player
+		&& player.onQueue )
+	{
+		var i,p;
+
+		for(i = 0; i < game.playerQueue.length; i++)
+		{
+			p = game.playerQueue[i];
+
+			if( p && p.id === player.id )
+			{
+				player.reset();
+
+				game.playerQueue.splice(i, 1);
+
+
+				if( players[player.id] )
+					players[player.id] = null ;
+
+				return true;
+			}
+
+		}
+
+	}
+
+	return false;
+}
+
+function removeActivePlayer(player, i)
+{
+	if(    player
+		&& player instanceof Player
+		&& !player.onQueue )
+	{
+		var j,card,p,found = false;
+
+		if( i === undefined )
+		{
+			for(i = 0; i < game.activePlayers.length; i++ )
+			{
+				p = game.activePlayers[i];
+
+				if( p && p.id === player.id )
+				{
+					found = true;
+					break;
+				}
+			}
+		}
+		else
+		{
+			if(    i >= 0
+				&& i < game.activePlayers.length
+				&& game.activePlayers[i].id === player.id )
+				found = true;
+		}
+
+		if( found )
+		{
+			if( game.isStopped() )
+			{
+				game.activePlayers.splice(i, 1);
+				game.buildPlayerNamesCache();
+
+				player.reset();
+			}
+			else
+			{
+				for( j = 0; j < player.hand.length ; j++ )
+				{
+					card = player.hand[j];
+
+					if( card )
+						game.discard.cards.push( card );
+				}
+
+				game.playersOut++;
+				
+				player.reset();
+				game.countPlayerCards();
+			}
+
+			if( players[player.id] )
+				players[player.id] = null ;
+			
+			return true;
+		}
+	}
+
+	return false;
+}
+
+app.delete('/lobby', function (req, res) {
+
+	var pid = req.session.pid,
+		player = players[pid],p,
+		removed = false,
+		queue, playerTurn = false,
+		playing = !game.isStopped();
+
+	if( player )
+	{
+		queue = player.onQueue;
+
+		if( queue )
+			removed = removeQueuedPlayer( player ) ;
+
+		else
+		{
+			if( playing )
+			{
+				p = game.getPlayer();
+				if( p && p.id === pid )
+					playerTurn = true;
+			}
+
+			removed = removeActivePlayer( player ) ;
+
+			if(    playing
+				&& removed
+				&& !checkGameEnded()
+			    && playerTurn )
+				game.moveToNextRound();
+		}
+					
+
+		var msg = "Player exited '" + player.name + "' [id: " + player.id + "]" ;
+
+		if( removed )
+		{
+			console.log( msg + ( queue ? ": removed from queue" : '' ) );
+
+			res.writeHead(200);
+			res.end();
+
+			return;
+		}
+
+		console.log( msg + ": error exiting" );
+	}
+
+	res.writeHead(403);
+	res.end();
+});
+
+
+
+
 app.all('*', function (req, res) {
 
 	console.log('Wrong request received: ' + req.path);
@@ -467,11 +592,10 @@ app.listen(port);
 console.log('Listening on port ' + port);
 
 
-
 game.startTimer(function(){
 
-	var i,j, player, card,
-		lostPlayerTurn = false,
+	var i, player,
+		disconnectedPlayerTurn = false,
 		deadCount = 0,
 		playing = !game.isStopped();
 	    now = Utils.getTime() - clientTimeout;
@@ -483,46 +607,28 @@ game.startTimer(function(){
 		if(    !player.onQueue
 			&& player._time < now )
 		{
-			console.log( "Player lost connection '" + player.name + "' [id: " + player.id + "]" );
+
+			console.log( "Player disconnected '" + player.name + "' [id: " + player.id + "]" );
+
+			if( !removeActivePlayer(player, i) )
+				console.log( "Error removing player!" );
 
 			if(    playing
 				&& game.curPlayer === i )
 			{
-				lostPlayerTurn = true;
-				console.log("Disconnected player turn");
+				disconnectedPlayerTurn = true;
+				console.log("* Disconnected player turn");
 			}
 
 			deadCount++;
-
-			for( j = 0; j < player.hand.length ; j++ )
-			{
-				card = player.hand[i];
-
-				if( card )
-					game.discard.cards.push( card );
-			}
-
-			player.reset();
-			game.playersOut++;
-
-			if( players[player.id] )
-				players[player.id] = null ;
-
-			if( game.isStopped() )
-				game.activePlayers.splice( i, 1 );
 		}
 	}
 
-	if( deadCount > 0 )
-	{
-		game.buildPlayerNamesCache();
-		game.countPlayerCards();
-
-		if(    playing
-			&& !checkGameEnded()
-			&& lostPlayerTurn )
-			game.moveToNextRound();
-	}
+	if(    deadCount > 0
+		&& playing
+		&& !checkGameEnded()
+		&& disconnectedPlayerTurn )
+		game.moveToNextRound();
 
 }, deadTimerInterval);
 console.log('Dead client timer started');
