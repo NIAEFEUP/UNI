@@ -17,7 +17,7 @@ Game.STATE = {
 }
 
 Game.PLAYER_LIMIT = 10;
-Game.MIN_PALYER = 2;
+Game.MIN_PLAYER = 1;
 
 Game.isColorValid = function(color) {
 
@@ -72,7 +72,7 @@ Game.prototype.isPlaying = function() {
 Game.prototype.canStart = function() {
 
 	return     this.isStopped()
-			&& this.activePlayers.length >= Game.MIN_PALYER
+			&& this.activePlayers.length >= Game.MIN_PLAYER
 			&& this.startVotes === this.activePlayers.length ;
 }
 
