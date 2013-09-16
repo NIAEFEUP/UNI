@@ -3,6 +3,7 @@ var activePlayer=-1;
 var cards=new Array();
 var gameNumber=0;
 var votes=0;
+var gameStatus=0;
 
 function Card(color,value) {
 	
@@ -77,7 +78,7 @@ function updateStatus() {
 		}
 		cards=data.c;
 		setTimeout(updateStatus,1000);
-	});
+	}).always(function() {setTimeout(updateStatus,1000);});
 }
 
 function updateLobby() {
@@ -89,7 +90,9 @@ function updateLobby() {
 		if (data.tv) {
 			updateVotes(data.tv,data.ps);
 		}
-		if (data.s==0) {
+		gameStatus=data.s;
+	}).always(function() {
+		if (gameStatus==0) {
 			setTimeout(updateLobby,1000);
 		}
 	});
