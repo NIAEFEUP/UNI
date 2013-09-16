@@ -264,7 +264,7 @@ app.get('/status', function (req, res) {
 	if( player )
 		player.updateTime();
 
-	/*if( game.isStopped() )
+	if( game.isStopped() )
 	{
 		respondZero(res, req, 204);
 
@@ -277,7 +277,7 @@ app.get('/status', function (req, res) {
 		respondZero(res, req, 304);
 
 		return;
-	}*/
+	}
 
 	var cPlayer = game.getPlayer(),
 	    hand = ( player && !player.onQueue ) ? player.hand : [] ,
