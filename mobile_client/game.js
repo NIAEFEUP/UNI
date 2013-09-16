@@ -6,6 +6,7 @@ var active=false;
 var inqueue=true;
 var gamestarted=false;
 var drawbuffer=false;
+var readychecked=false;
 var callback="?callback=?";
 
 
@@ -45,7 +46,22 @@ Card.prototype.html = function() {
 
 function QueryStatus()
 {
-
+	var ingame=true;
+	$.getJSON(playurl+room+"status",{},function(data){
+				
+				
+			
+		},'json').fail(
+		function(jqxhr, textStatus, error ) {
+			var err = textStatus + ', ' + error;
+			console.log( "statusRequest Failed: " + err);
+			active=true;
+			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o jogo");
+			$("#statusmsg").show();		
+	}).always(function(){
+		
+				if(ingame) setTimeout(QueryStatus,1000);	
+	});
 }
 
 function QueryLobby()
@@ -92,7 +108,9 @@ function QueryLobby()
 			var err = textStatus + ', ' + error;
 			console.log( "lobbyRequest Failed: " + err);
 			active=true;
-			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o estado");
+			$("#statusmsg").tex/vote-start
+
+t("Falha a comunicar com o servidor para atualizar o estado");
 			$("#statusmsg").show();		
 	}).always(function(){
 		
@@ -225,8 +243,8 @@ $(document).ready(function() {
 			$.post(playurl+room+"vote-start",{
 			},function(data){
 				$("#readycheck").hide();
-				$("#statusmsg").text("...");
-						$("#statusmsg").show();
+				$("#statusmsg").text("À espera dos outros jogadores");
+				$("#statusmsg").show();
 							
 			}).fail(
 			function(){
@@ -306,8 +324,8 @@ $(document).ready(function() {
 	
 	active=true; //ativar os campos
 	
-	/*teste*/
-	$("#lobby").hide();
+	//teste
+	/*$("#lobby").hide();
 	$("#game").show();
 	var c1=new Card("0","11");
 	var c2=new Card("1","13");
@@ -330,6 +348,7 @@ $(document).ready(function() {
 	$("#cardsdiv").append(c3.html());
 	$("#cardsdiv").append(c4.html());
 	$("#cardsdiv").append(c5.html());
+	*/
 });
 
 
