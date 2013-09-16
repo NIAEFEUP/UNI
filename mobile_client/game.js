@@ -1,5 +1,13 @@
-﻿var playurl="ni.fe.up.pt/uno/";
-var room="1";
+﻿var playurl="http://localhost:3000/";
+var room="";
+var playerName="";
+var status;
+var active=false;
+var inqueue=true;
+var gamestarted=false;
+var drawbuffer=false;
+var callback="?callback=?";
+
 
 function Card(color,value) {
 	
@@ -35,57 +43,102 @@ Card.prototype.html = function() {
 			'</div>';
 }
 
+function QueryStatus()
+{
+
+}
+
+function QueryLobby()
+{
+	
+}
 
 $(document).ready(function() {
 	
-	/*
-	getjson a cada sala para saber lugares
-	*/
+	
 	
 	
 	$("#gamejoin").click(function(){
-		$("#loadmsg").append("A carregar o jogo.");
+
+		active=false;
+		$("#loadmsg").html("<i class='icon-spinner icon-spin icon-4x'></i>A carregar o jogo.");
 		$("#lobby").hide();
 		$("#loading").show();
-		$.post(playurl,{/*args*/},function(data){
-				//console.log(data);
+		
+		
+		room="/"+$("#roomslt").val()+"/";
+		room="";
+		playerName=$("#name").val();
+		console.log(playerName+" "+room);
+		
+		$.post(playurl+room+"lobby",{name:playerName},function(data){
+				
+				active=true;
+				console.log("sucesso lobby");
+				$("#loading").hide();
 				if (data=="null")//json de jogo cheiro
 				{
 					$('#lobbyerrormsg').text("Jogo cheio. Por favor tente outro jogo.");
 					$('#lobbyerrormsg').show();
 				}else{
-					/*TODO joinar o jogo*/
+					//TODO joinar o jogo
+					$("#game").show();
+					console.log(data.q);
+					if (data.q==false)
+					{
+						inqueue=false;
+						QueryStatus();
+					}
+					else
+					{
+						inqueue=true;
+						QueryStatus();
+					}
 				}
-		}).error(
-		function(){
+		},'json').fail(
+		function(jqxhr, textStatus, error ) {
+			var err = textStatus + ', ' + error;
+			console.log( "lobbyRequest Failed: " + err);
+			active=true;
+			$("#loading").hide();
 			$('#lobbyerrormsg').text("Erro a entrar no jogo. Por favor tente outra vez.");
 			$('#lobbyerrormsg').show();
-		});
+			$('#lobby').show();
+		})/*.always(function(){
+			alert("x3");
+		})*/;
 	});
 	
-	$("#gameauto").click(function(){
-		$("#loadmsg").text("A carregar o jogo.");
-		$("#lobby").hide();
-		$("#loading").show();
-		
-		$.post(playurl,{/*args*/},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-				{
-					$('#lobbyerrormsg').text("Jogo cheio. Por favor tente outro jogo.");
-					$('#lobbyerrormsg').show();
-				}else{
-					/*TODO joinar o jogo*/
-				}
-		}).error(
-		function(){
-			$('#lobbyerrormsg').text("Erro a entrar no jogo. Por favor tente outra vez.");
-			$('#lobbyerrormsg').show();
-		});
-	});
+	/*$("#gameauto").click(function(){
+		if (active==true){	
+			
+			$("#loadmsg").text("A carregar o jogo.");
+			$("#lobby").hide();
+			$("#loading").show();
+			active=false;
+			$.post(playurl+room,{//args
+			},function(data){
+					//console.log(data);
+					active=false;
+					if (data=="null")//json de jogo cheio
+					{
+						$('#lobbyerrormsg').text("Jogo cheio. Por favor tente outro jogo.");
+						$('#lobbyerrormsg').show();
+					}else{
+						//TODO joinar o jogo
+					}
+			}).fail(
+			function(){
+				$('#lobbyerrormsg').text("Erro a entrar no jogo. Por favor tente outra vez.");
+				$('#lobbyerrormsg').show();
+				active=true
+			});
+		}
+	});*/
 	
 	$("#drawcard").click(function(){
-		console.log("pick a card");
+		if (active==true){
+			
 		/*
 		$.post(playurl,{//args
 		},function(data){
@@ -96,20 +149,127 @@ $(document).ready(function() {
 				}else{
 					//TODO  sacar as cartas
 				}
-		}).error(
+		}).fail(
 		function(){
 			
 		});*/
+		}
+		console.log("pick a card "+active);
+		
 	});
+	
 	
 	$(document).on('click','.card',function(event){
-		
-		console.log($(this).data("color")+" "+$(this).data("value"));
+		if (active==true){	
+			
+		}
+		console.log($(this).data("color")+" "+$(this).data("value")+" "+active);
+	});
+	
+	$("#readycheck").click(function(){
+		if (active==true){
+			
+		/*
+		$.post(playurl,{//args
+
+		},function(data){
+				//console.log(data);
+				if (data=="null")//json de jogo cheio
+
+				{
+
+				}else{
+					//TODO  sacar as cartas
+
+				}
+		}).fail(
+		function(){
+			
+		});*/
+		}
+		console.log("readycheck "+active);
 		
 	});
 	
+	$("#skipturn").click(function(){
+		if (active==true){
+			
+		/*
+		$.post(playurl,{//args
+
+		},function(data){
+				//console.log(data);
+				if (data=="null")//json de jogo cheio
+
+				{
+
+				}else{
+					//TODO  sacar as cartas
+
+				}
+		}).fail(
+		function(){
+			
+		});*/
+		}
+		console.log("skipturn"+active);
+		
+	});
+	
+	$("#acceptdraw").click(function(){
+		if (active==true){
+			
+		/*
+		$.post(playurl,{//args
+
+		},function(data){
+				//console.log(data);
+				if (data=="null")//json de jogo cheio
+
+				{
+
+				}else{
+					//TODO  sacar as cartas
+
+				}
+		}).fail(
+		function(){
+			
+		});*/
+		}
+		console.log("acceptdraw "+active);
+		
+	});
+	
+	$("#exitbtn").click(function(){
+		if (active==true){
+			
+		/*
+		$.post(playurl,{//args
+
+		},function(data){
+				//console.log(data);
+				if (data=="null")//json de jogo cheio
+
+				{
+
+				}else{
+					//TODO  sacar as cartas
+
+				}
+		}).fail(
+		function(){
+			
+		});*/
+		}
+		console.log("exitbtn "+active);
+		
+	});
+	
+	active=true; //ativar os campos
+	
 	/*teste*/
-	$("#lobby").hide();
+	/*$("#lobby").hide();
 	$("#game").show();
 	var c1=new Card("0","11");
 	var c2=new Card("1","13");
@@ -131,6 +291,8 @@ $(document).ready(function() {
 	$("#cardsdiv").append(c2.html());
 	$("#cardsdiv").append(c3.html());
 	$("#cardsdiv").append(c4.html());
-	$("#cardsdiv").append(c5.html());
+	$("#cardsdiv").append(c5.html());*/
 });
+
+
 
