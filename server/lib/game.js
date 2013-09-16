@@ -90,6 +90,7 @@ Game.prototype.start = function() {
 		this.giveCard( this.activePlayers[i], 7 );
 
 	//TODO: carta da mesa
+	this.discard.push( this.deck.cards.pop() );
 
 	this.countPlayerCards();
 
