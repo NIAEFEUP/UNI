@@ -1,11 +1,25 @@
 ﻿body{
-	background-color:#20C92E;
-	padding-bottom:8px;
+	background-color:#909090;
+	margin:0px;
 }
 
-#game,#drawcard{
-	display:inline;
+#game{
+	display:block;
 	float:left;
+	width:100%
+}
+
+#statusmsg{
+	top:0%;
+	left:0%;
+	font-weight:700;
+	color:#FFFFFF;
+	background-color:#000000;
+	font-size:12pt;
+	padding:10px;
+	text-align:center;
+	margin:0px;
+	
 }
 /*card CSS*/
 div.card,#drawcard{
@@ -107,7 +121,7 @@ Instead of a list of all class selectors,
 you can use the generic selector below, but it's slower:
 [class*="icon-"] {
 */
-.icon-loop, .icon-expand ,.icon-blocked, .icon-user, .icon-trophy {
+.icon-loop, .icon-hand ,.icon-wild,.icon-blocked, .icon-user, .icon-trophy {
 	font-family: 'icomoon';
 	speak: none;
 	font-style: normal;
@@ -128,6 +142,9 @@ you can use the generic selector below, but it's slower:
 .icon-trophy:before {
 	content: "\e003";
 }
-.icon-expand:before {
+.icon-wild:before {
 	content: "\e004";
+}
+.icon-hand:before {
+	content: "\e006";
 }

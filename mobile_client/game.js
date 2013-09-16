@@ -1,5 +1,5 @@
 ﻿var playurl="ni.fe.up.pt/uno/";
-//texto: [0-9]/<=> reverse/Stop/+2/+4/Wild
+var room="1";
 
 function Card(color,value) {
 	
@@ -19,8 +19,8 @@ function Card(color,value) {
 		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
 		case 11:this.valuetext="+2";break;
 		case 12:this.valuetext="<i class='icon-loop'></i>";break;
-		case 13:this.valuetext="Wild";break;
-		case 14:this.valuetext="+4";break;
+		case 13:this.valuetext="<i class='icon-wild'></i>";break;
+		case 14:this.valuetext="<i class='icon-hand'></i>";break;
 		default:this.valuetext=value;
 	}
 }
@@ -47,7 +47,7 @@ $(document).ready(function() {
 		$("#loadmsg").append("A carregar o jogo.");
 		$("#lobby").hide();
 		$("#loading").show();
-		$.post(joingameurl,{/*args*/},function(data){
+		$.post(playurl,{/*args*/},function(data){
 				//console.log(data);
 				if (data=="null")//json de jogo cheiro
 				{
@@ -68,7 +68,7 @@ $(document).ready(function() {
 		$("#lobby").hide();
 		$("#loading").show();
 		
-		$.post(joinrndgameurl,{/*args*/},function(data){
+		$.post(playurl,{/*args*/},function(data){
 				//console.log(data);
 				if (data=="null")//json de jogo cheio
 				{
@@ -109,11 +109,11 @@ $(document).ready(function() {
 	});
 	
 	/*teste*/
-	//$("#lobby").hide();
-	//$("#game").show();
-	var c1=new Card("0","10");
+	$("#lobby").hide();
+	$("#game").show();
+	var c1=new Card("0","11");
 	var c2=new Card("1","13");
-	var c3=new Card("2","11");
+	var c3=new Card("2","10");
 	var c4=new Card("3","12");
 	var c5=new Card("4","14");
 	
