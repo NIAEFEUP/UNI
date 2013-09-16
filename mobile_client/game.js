@@ -1,16 +1,20 @@
-﻿var playurl="http://localhost:3000/";
+﻿var playurl="http://ni.fe.up.pt/uni";
 var room="";
 var playerName="";
 var status;
-var active=false;
+var active=false; //boolean para bloquear inputs durante chamadas ao servidor
+
+//flags
 var inqueue=true;
 var gameactive=false;
 var drawbuffer=false;
 var readychecked=false;
 var inlobby=false;
 var ingame=false;
+//pointer ao set timeout para o desativar quando fizer /quit
 var timerfunc;
-var callback="?callback=?";
+//milisegundos para fazer novo request de status/lobby
+var timerms=1000; 
 
 
 function Card(color,value) {
@@ -55,7 +59,7 @@ function ParseMao(mao )
 	for (var i=0;i< mao.size;i++)
 	{
 		card=Card(mao[i].t,mao[i].c);
-		htmlstr+=card.html;
+		htmlstr+=card.html();
 	}
 	return htmlstr;
 }
@@ -63,51 +67,87 @@ function ParseMao(mao )
 function QueryStatus()
 {
 	ingame=true;
-	$.getJSON(playurl+room+"status"+callback,{},function(data){
-				
-		if (data.s==0||data.t==false)
-		{
-			active=false;
-			if (data.t==false)
-			{
-			$("#statusmsg").text("À espera da sua vez");
-			$("#statusmsg").show();		
-			}
-			else
-			{
-				$("#statusmsg").text("Jogo pausado");
-				$("#statusmsg").show();		
-			}
-		}	
-		else{
-			active=true;
-			$("#cardsdiv").html(ParseMao(data.l));	
-		}
+	$.ajax({
+		url: playurl+room+'status',
+		type: 'GET',
+		success: function(data, cenas, res){
 			
-		},'json').fail(
-		function(jqxhr, textStatus, error ) {
-			var err = textStatus + ', ' + error;
-			console.log( "statusRequest Failed: " + err);
-			active=true;
-			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o jogo");
-			$("#statusmsg").show();		
-	}).always(function(){
+			if( res )
+			{
+				if( res.status === 204 )
+				{	
+					$("#statusmsg").text("Jogo terminado");
+						$("#statusmsg").show();	
+					console.log('Jogo desativado');
+				}
+				else
+				if( res.status === 304 )
+				{
+					//não fazer nada
+					console.log('Página não modificada.');
+				}
+				else if( res.status === 200 )
+				{
+
+					console.log('Jogo activo, e modificado.. Fazer cenas com os dados recolhidos...'+JSON.stringify(data));
+					if (data.s==0||data.t==false)
+					{
+						active=false;
+						if (data.t==false)
+						{
+
+						$("#statusmsg").text("À espera da sua vez");
+
+						$("#statusmsg").show();		
+
+						}
+
+						else
+
+						{
+
+							$("#statusmsg").text("Jogo pausado");
+
+							$("#statusmsg").show();		
+
+						}
+
+					}	
+
+					else{
+						active=true;
+
+						$("#cardsdiv").html(ParseMao(data.l));	
+
+					}
+				}
+				else
+				{
+					$("#statusmsg").text("Falha na comunicação com o servidor para atualizar o jogo");
+					$("#statusmsg").show();		
+				}
+			}
+			
+		}
+	}).fail(function(res){
+		var st = ( res ? res.status : -1 ) ;
 		
-				if(ingame) timerfunc=setTimeout(QueryStatus,1000);	
+		$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o jogo");
+		$("#statusmsg").show();		
+		console.log("Status Fail: " + st);
+	}).always(function(res){
+		if(ingame) timerfunc=setTimeout(QueryStatus, timerms);
 	});
+	
 }
 
 function QueryLobby()
 {
-	$.ajaxSetup({
-		xhrFields: {
-		withCredentials: true
-		}
-	});
+	active=false;
 	inlobby=true;
-	$.getJSON(playurl+room+"lobby"+callback,{},function(data){
+	$.getJSON(playurl+room+"lobby",{},function(data){
 				
-				active=true;
+				
 				console.log("sucesso querylobby "+JSON.stringify(data));
 				
 				
@@ -145,12 +185,12 @@ function QueryLobby()
 		function(jqxhr, textStatus, error ) {
 			var err = textStatus + ', ' + error;
 			console.log( "lobbyRequest Failed: " + err);
-			active=true;
+			
 			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o estado");
 			$("#statusmsg").show();		
 	}).always(function(){
-		
-				if(inlobby) timerfunc=setTimeout(QueryLobby,1000);	
+		active=true;
+				if(inlobby) timerfunc=setTimeout(QueryLobby,timerms);	
 	});
 }
 
@@ -173,7 +213,6 @@ $(document).ready(function() {
 		
 		
 		room="/"+$("#roomslt").val()+"/";
-		room="";
 		playerName=$("#name").val();
 		console.log(playerName+" "+room);
 		
@@ -215,32 +254,6 @@ $(document).ready(function() {
 		})*/;
 	});
 	
-	/*$("#gameauto").click(function(){
-		if (active==true){	
-			
-			$("#loadmsg").text("A carregar o jogo.");
-			$("#lobby").hide();
-			$("#loading").show();
-			active=false;
-			$.post(playurl+room,{//args
-			},function(data){
-					//console.log(data);
-					active=false;
-					if (data=="null")//json de jogo cheio
-					{
-						$('#lobbyerrormsg').text("Jogo cheio. Por favor tente outro jogo.");
-						$('#lobbyerrormsg').show();
-					}else{
-						//TODO joinar o jogo
-					}
-			}).fail(
-			function(){
-				$('#lobbyerrormsg').text("Erro a entrar no jogo. Por favor tente outra vez.");
-				$('#lobbyerrormsg').show();
-				active=true
-			});
-		}
-	});*/
 	
 	$("#drawcard").click(function(){
 		if (active==true&&gameactive==true){
@@ -346,7 +359,7 @@ $(document).ready(function() {
 	$("#exitbtn").click(function(){
 		if (active==true){
 			
-		$.post(playurl+"quit",function(data){
+		$.post(playurl+room+"quit",function(data){
 				active=true;
 				ingame=false;
 				inlobby=false;
