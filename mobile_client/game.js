@@ -50,7 +50,54 @@ function QueryStatus()
 
 function QueryLobby()
 {
-	
+	var inlobby=true;
+	$.getJSON(playurl+room+"lobby",{},function(data){
+				
+				active=true;
+				console.log("sucesso querylobby "+JSON.stringify(data));
+				
+				
+				console.log(data.q);
+				if (data.q==false)
+				{
+					inqueue=false;
+					if (data.v==false) {
+						
+						$("#readycheck").show();
+						$("#statusmsg").text("Inicie o ready check");
+						$("#statusmsg").show();
+					}
+					else{
+						readychecked=true;
+						$("#statusmsg").text("à espera dos outros jogadores");
+						$("#statusmsg").show();
+						$("#readycheck").hide();
+						if (data.s==1)
+						{
+							inlobby=false;
+							QueryStatus();
+						}
+						
+					}
+				}
+				else
+				{
+					$("#statusmsg").text("Em queue");
+					$("#statusmsg").show();
+					inqueue=true;
+				}
+			
+		},'json').fail(
+		function(jqxhr, textStatus, error ) {
+			var err = textStatus + ', ' + error;
+			console.log( "lobbyRequest Failed: " + err);
+			active=true;
+			$("#statusmsg").text("Falha a comunicar com o servidor para atualizar o estado");
+			$("#statusmsg").show();		
+	}).always(function(){
+		
+				if(inlobby) setTimeout(QueryLobby,10000);	
+	});
 }
 
 $(document).ready(function() {
@@ -87,12 +134,12 @@ $(document).ready(function() {
 					if (data.q==false)
 					{
 						inqueue=false;
-						QueryStatus();
+						QueryLobby();
 					}
 					else
 					{
 						inqueue=true;
-						QueryStatus();
+						QueryLobby();
 					}
 				}
 		},'json').fail(
@@ -244,23 +291,13 @@ $(document).ready(function() {
 	$("#exitbtn").click(function(){
 		if (active==true){
 			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+		$.ajax({type:'DELETE',url:playurl+"lobby",done:function(data){
+				active=true;
+				console.log("sucesso sair");
+				$("#game").hide();
+				$("#statusmsg").hide();
+				$("#lobby").show();
+				}});
 		}
 		console.log("exitbtn "+active);
 		
