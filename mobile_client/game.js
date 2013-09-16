@@ -69,7 +69,7 @@ function QueryLobby()
 					}
 					else{
 						readychecked=true;
-						$("#statusmsg").text("à espera dos outros jogadores");
+						$("#statusmsg").text("À espera dos outros jogadores");
 						$("#statusmsg").show();
 						$("#readycheck").hide();
 						if (data.s==1)
@@ -96,7 +96,7 @@ function QueryLobby()
 			$("#statusmsg").show();		
 	}).always(function(){
 		
-				if(inlobby) setTimeout(QueryLobby,10000);	
+				if(inlobby) setTimeout(QueryLobby,1000);	
 	});
 }
 
@@ -104,6 +104,11 @@ $(document).ready(function() {
 	
 	
 	
+	$.ajaxSetup({
+		xhrFields: {
+		withCredentials: true
+		}
+	});
 	
 	$("#gamejoin").click(function(){
 
@@ -215,24 +220,20 @@ $(document).ready(function() {
 	
 	$("#readycheck").click(function(){
 		if (active==true){
+			active=false;	
+		
+			$.post(playurl+room+"vote-start",{
+			},function(data){
+				$("#readycheck").hide();
+				$("#statusmsg").text("...");
+						$("#statusmsg").show();
+							
+			}).fail(
+			function(){
 			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+			}).always(function(){
+				active=true;
+			});
 		}
 		console.log("readycheck "+active);
 		
@@ -306,7 +307,7 @@ $(document).ready(function() {
 	active=true; //ativar os campos
 	
 	/*teste*/
-	/*$("#lobby").hide();
+	$("#lobby").hide();
 	$("#game").show();
 	var c1=new Card("0","11");
 	var c2=new Card("1","13");
@@ -328,7 +329,7 @@ $(document).ready(function() {
 	$("#cardsdiv").append(c2.html());
 	$("#cardsdiv").append(c3.html());
 	$("#cardsdiv").append(c4.html());
-	$("#cardsdiv").append(c5.html());*/
+	$("#cardsdiv").append(c5.html());
 });
 
 

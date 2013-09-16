@@ -43,11 +43,17 @@ div.card,div.buttondiv{
 	border:1px black solid;
 }
 
-#drawcard{
+div.buttondiv span{
+	line-height:24pt;
+	display: inline-block;
+  	vertical-align: middle;
+}
+
+/*#drawcard{
 	line-height:1;
 	padding-top:30px;
 	
-}
+}*/
 
 div.card>div{
 	height:100%;

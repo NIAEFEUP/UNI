@@ -72,10 +72,12 @@ function getSamePlayer(pid)
 
 function addCrossDomainHeaders(res)
 {
-	res.setHeader('Access-Control-Allow-Origin', '*');
+	res.setHeader('Access-Control-Allow-Origin', 'http://localhost');
 	res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-	res.setHeader('Access-Control-Allow-Headers', 'Cookie');
-	res.setHeader('Access-Control-Max-Age', '1000');
+	//res.setHeader('Access-Control-Allow-Headers', 'Cookie');
+	res.setHeader('Access-Control-Allow-Credentials', true);
+	res.setHeader('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+	//res.setHeader('Access-Control-Max-Age', '1000');
 }
 
 function respondZero(res, statusCode)
