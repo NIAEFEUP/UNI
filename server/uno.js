@@ -72,8 +72,7 @@ function getSamePlayer(pid)
 {
 	var player = game.getPlayer();
 
-	if(    pid !== undefined
-		&& player 
+	if(    player 
 		&& player.id === pid
 		&& !player.onQueue )
 	{
