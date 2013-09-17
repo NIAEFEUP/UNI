@@ -558,7 +558,7 @@ app.post('/quit', function (req, res) {
 
 		if( quitPlayer( player ) )
 		{
-			console.log( msg + ( queue ? ": removed from queue" : '' ) );
+			console.log( msg + ( queued ? ": removed from queue" : '' ) );
 
 			Template.zero(res, req, 200);
 
