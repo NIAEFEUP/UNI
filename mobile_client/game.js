@@ -5,13 +5,14 @@ var status;
 var active=false; //boolean para bloquear inputs durante chamadas ao servidor
 
 //flags
-var inqueue=true;
-var gameactive=false;
+var colorSelBuffer="";
 var drawbuffer=false;
 var skipdraw=false;
 var readychecked=false;
 var inlobby=false;
 var ingame=false;
+var inqueue=true;
+var gameactive=true;
 //pointer ao set timeout para o desativar quando fizer /quit
 var timerfunc;
 //milisegundos para fazer novo request de status/lobby
@@ -129,9 +130,17 @@ function QueryStatus()
 
 					else{
 						active=true;
-						$("#statusmsg").text("É a sua vez");
-						$("#statusmsg").show();		
-
+						if (data.b>0){
+							$("#statusmsg").text("Tem "+data.b+" cartas em espera.");
+							$("acceptdraw").show();
+							$("#statusmsg").show();	
+						}
+						else
+						{
+							$("#statusmsg").text("É a sua vez");
+							$("#statusmsg").show();		
+						
+						}
 						$("#cardsdiv").html(ParseMao(data.l));	
 						console.log('done');
 
@@ -212,30 +221,51 @@ function QueryLobby()
 function playCard(card){
 	active=false;
 	clearTimeout(timerfunc);
-	color=card.data("color");
-	value=card.data("value");
-	$.post(playurl+room+"play/"+value+"/"+color,{},function(data){
-		//fixe
-		
-		skipdraw=false;
-		console.log("play sucessefull with "+color+" "+value+" ");
-	},'json').fail(function(jqxhr, textStatus, error ) {
-		var err = textStatus + ', ' + error;
-		console.log( "playRequest with "+color+" "+value+" Failed: " + err);
-		active=true; 
-		$("#statusmsg").text("Jogada inválida.");
-		$("#statusmsg").show();
-	}).always(function(){
+	var color=card.data("color");
+	var value=card.data("value");
+	
+	if ((value==13||value==14)&&colorSelBuffer=="")
+	{
+		colorSelBuffer=	$("#cardsdiv").html();
+		var c1=new Card(0,value);
+		var c2=new Card(1,value);
+		var c3=new Card(2,value);
+		var c4=new Card(3,value);
+		$("#cardsdiv").html(c1.html()+c2.html()+c3.html()+c4.html());
+		$("#statusmsg").text("Escolha uma cor");
+		$("#statusmsg").show();	
 		active=true;
-		QueryStatus();
-	});
+	}else
+	{
+		$.post(playurl+room+"play/"+value+"/"+color,{},function(data){
+			//fixe
+		
+			skipdraw=false;
+			console.log("play sucessefull with "+color+" "+value+" ");
+		},'json').fail(function(jqxhr, textStatus, error ) {
+			var err = textStatus + ', ' + error;
+			console.log( "playRequest with "+color+" "+value+" Failed: " + err);
+			active=true; 
+			$("#statusmsg").text("Jogada inválida.");
+			$("#statusmsg").show();
+		}).always(function(){
+			if (colorSelBuffer!="")
+			{
+				$("#statusmsg").text("Boa escolha");//troll :)
+				$("#statusmsg").show();	
+				$("#cardsdiv").html(colorSelBuffer);	
+				colorSelBuffer="";
+			}
+			active=true;
+			QueryStatus();
+		});
+	}
 }
+
 
 function skipPlay(){
 	active=false;
 	clearTimeout(timerfunc);
-	color=card.data("color");
-	value=card.data("value");
 	$.getJSON(playurl+room+"/skip-turn",{},function(data){
 		//fixe
 		
@@ -256,8 +286,6 @@ function skipPlay(){
 function drawOne(){
 	active=false;
 	clearTimeout(timerfunc);
-	color=card.data("color");
-	value=card.data("value");
 	$.getJSON(playurl+room+"/get-one",{},function(data){
 		//fixe
 		
@@ -438,28 +466,24 @@ $(document).ready(function() {
 	//teste
 	/*$("#lobby").hide();
 	$("#game").show();
-	var c1=new Card("0","11");
-	var c2=new Card("1","13");
-	var c3=new Card("2","10");
-	var c4=new Card("3","12");
-	var c5=new Card("4","14");
-	
+	var c1=new Card(0,11);
+	var c2=new Card(1,9);
+	var c3=new Card(2,10);
+	var c4=new Card(3,5);
+	var c5=new Card(3,2);
+	var c6=new Card(1,6);
+	var c7=new Card(4,13);
+	var c8=new Card(4,14);
 	$("#cardsdiv").append(c1.html());
 	$("#cardsdiv").append(c2.html());
 	$("#cardsdiv").append(c3.html());
 	$("#cardsdiv").append(c4.html());
 	$("#cardsdiv").append(c5.html());
-	$("#cardsdiv").append(c1.html());
-	$("#cardsdiv").append(c2.html());
-	$("#cardsdiv").append(c3.html());
-	$("#cardsdiv").append(c4.html());
-	$("#cardsdiv").append(c5.html());
-	$("#cardsdiv").append(c1.html());
-	$("#cardsdiv").append(c2.html());
-	$("#cardsdiv").append(c3.html());
-	$("#cardsdiv").append(c4.html());
-	$("#cardsdiv").append(c5.html());
+	$("#cardsdiv").append(c6.html());
+	$("#cardsdiv").append(c7.html());
+	$("#cardsdiv").append(c8.html());
 	*/
+	
 });
 
 
