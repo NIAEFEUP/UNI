@@ -205,6 +205,45 @@ function removeActivePlayer(player, i)
 	return false;
 }
 
+function quitPlayer(player)
+{
+	if(    player
+		&& player instanceof Player)
+	{
+		var p, pid = player.id,
+			removed = false,
+			queue = player.onQueue,
+			playerTurn = false,
+			playing = !game.isStopped();
+
+		if( queue )
+			removed = removeQueuedPlayer( player ) ;
+
+		else
+		{
+			if( playing )
+			{
+				p = game.getPlayer();
+				if( p && p.id === pid )
+					playerTurn = true;
+			}
+
+			removed = removeActivePlayer( player ) ;
+
+			if(    playing
+				&& removed
+				&& !checkGameEnded()
+			    && playerTurn )
+				game.moveToNextRound();
+		}
+
+		return removed ;
+	}
+
+	return false;
+}
+
+
 
 /***********************************************************************
  *	Routes
@@ -421,8 +460,6 @@ app.get('/skip-turn', function (req, res) {
 });
 
 
-
-
 app.post('/play/:type/:color', function (req, res) {
 
 	if( game.isPlaying() )
@@ -432,18 +469,14 @@ app.post('/play/:type/:color', function (req, res) {
 
 		if( cPlayer )
 		{
-
-			var type = req.params.type,
-				color = req.params.color;
+			var type = parseInt(req.params.type),
+				color = parseInt(req.params.color);
 
 			console.log( "Player '" + cPlayer.name + "' [id: " + cPlayer.id + "] played card of type: " + type + " and color: " + color );
 
-			if(    type !== undefined
-				&& color !== undefined )
+			if(    !isNaN( type )
+				&& !isNaN( color ) )
 			{
-				type = parseInt(type);
-				color = parseInt(color);
-
 				var i = 0, card, found = false, nextRound = true;
 
 				for(; i < cPlayer.hand.length; i++ )
@@ -491,8 +524,6 @@ app.post('/play/:type/:color', function (req, res) {
 
 					return;
 				}
-			
-
 			}
 		}
 	}
@@ -501,50 +532,11 @@ app.post('/play/:type/:color', function (req, res) {
 });
 
 
-function quitPlayer(player)
-{
-	if(    player
-		&& player instanceof Player)
-	{
-		var p, pid = player.id,
-			removed = false,
-			queue = player.onQueue,
-			playerTurn = false,
-			playing = !game.isStopped();
-
-		if( queue )
-			removed = removeQueuedPlayer( player ) ;
-
-		else
-		{
-			if( playing )
-			{
-				p = game.getPlayer();
-				if( p && p.id === pid )
-					playerTurn = true;
-			}
-
-			removed = removeActivePlayer( player ) ;
-
-			if(    playing
-				&& removed
-				&& !checkGameEnded()
-			    && playerTurn )
-				game.moveToNextRound();
-		}
-
-		return removed ;
-	}
-
-	return false;
-}
-
-
 app.post('/quit', function (req, res) {
 
 	var pid = req.session.pid,
 		player = ( player[pid] ? players[pid] : false ),
-		p, queued ;
+		queued ;
 
 	if( player )
 	{
@@ -578,22 +570,20 @@ app.post('/quit', function (req, res) {
 
 function admLog(req, msg)
 {
-	console.log("[ADM " + req.ip + "] " + msg );
-
+	console.log("[ADM - " + req.ip + "] " + msg );
 }
 app.get('/adm-login', function (req, res) {
 
 	var logged = req.session.logged,
 		code = req.body.code;
 
-	if( !req.session.logged )
+	if( req.session.logged )
 	{
-
-		Template.view.login(res, req);
+		Template.redirect(res, '/adm-index');
 		return;
 	}
 
-	Template.zero(res, req, 403, false);
+	Template.view.login(res, req);
 });
 
 app.post('/adm-login', function (req, res) {
@@ -610,7 +600,6 @@ app.post('/adm-login', function (req, res) {
 		if( !logged )
 			admLog(req, "Successful login");
 
-
 		Template.redirect(res, '/adm-index');
 		return;
 	}
@@ -623,9 +612,8 @@ app.post('/adm-login', function (req, res) {
 
 app.get('/adm-index', function (req, res) {
 
-	if( true || req.session.logged )
+	if( req.session.logged )
 	{
-
 		Template.view.index(res, req, game);
 		return;
 	}
@@ -649,10 +637,10 @@ app.get('/adm-logout', function (req, res) {
 
 app.get('/adm-kick/:pid', function (req, res) {
 
-	if( true || req.session.logged )
+	if( req.session.logged )
 	{
 		var pid = parseInt( req.params.pid ),
-			player = ( players[pid] ? players[pid] : false ),
+			player = ( !isNaN(pid) && players[pid] ) ? players[pid] : false ,
 			name = ( player ? player.name : null );
 
 		if( player && quitPlayer( player ) )
@@ -669,7 +657,7 @@ app.get('/adm-kick/:pid', function (req, res) {
 
 app.get('/adm-pause-toggle', function (req, res) {
 
-	if( true || req.session.logged )
+	if( req.session.logged )
 	{
 		if( !game.isStopped() )
 		{
@@ -706,7 +694,7 @@ app.get('/adm-pause-toggle', function (req, res) {
 
 app.get('/adm-stop', function (req, res) {
 
-	if( true || req.session.logged )
+	if( req.session.logged )
 	{
 		if( !game.isStopped() )
 		{
@@ -714,10 +702,13 @@ app.get('/adm-stop', function (req, res) {
 
 			for( i = 0; i < game.activePlayers.length; i++ )
 			{
+				player = game.activePlayers[i] ;
+
 				if(    player
 					&& !player.onQueue )
 				{
 					player.reset();
+
 					game.playerQueue.push( player );
 				}
 			}
@@ -735,17 +726,44 @@ app.get('/adm-stop', function (req, res) {
 	Template.redirect(res, '/adm-login');
 });
 
+app.get('/adm-reset', function (req, res) {
+
+	if( req.session.logged )
+	{
+		for( var i = 0; i < players.length; i++ )
+		{
+			if( players[i] )
+			{
+				players[i].reset();
+				players[i] = null;
+			}
+		}
+
+		game.playerQueue = [];
+		game.gamesPlayed = 0 ;
+
+		game.reset();
+
+		admLog(req, 'Game reset');
+
+		Template.redirect(res, '/adm-index');
+		return;
+	}
+
+	Template.redirect(res, '/adm-login');
+});
+
 
 app.get('/adm-give/:player/:count', function (req, res) {
 
-	var id = parseInt(req.params.player),
-		count = parseInt(req.params.count),
-		i,player;
-
-	if( true || req.session.logged )
+	if( req.session.logged )
 	{
-		if(    id !== undefined
-			&& count !== undefined
+		var id = parseInt(req.params.player),
+			count = parseInt(req.params.count),
+			i,player;
+
+		if(    !isNaN(id)
+			&& !isNaN(count)
 			&& id >= 0
 			&& id < game.activePlayers.length
 			&& !game.isStopped() )

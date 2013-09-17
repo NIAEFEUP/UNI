@@ -90,8 +90,8 @@ function Template() {}
 Template.login = function(res, req)
 {
 		var 
-		out  = '<html><head></head><body>Admin Code:<br>';
-		out += '<form method="POST"><input type="text" name="code"/><br><input type="submit" value="Enviar"></form>';
+		out  = "<!DOCTYPE html>\n<html><head><title>UNO Admin Area</title></head><body>Admin Code:<br>";
+		out += '<form method="POST"><input type="password" name="code"/> <input type="submit" value="Enviar"></form>';
 		out += '</body></html>';
 
 		respondHTML(res, req, out, false);
@@ -102,17 +102,17 @@ Template.index = function(res, req, game)
 
 	var i,player,now = Utils.getTime(),
 
-	out  = '<html><head></head><body>'
+	out  = "<!DOCTYPE html>\n"
 
+		+ '<html><head><meta http-equiv="refresh" content="5"><title>UNO Admin Area</title></head><body>'
 		+ '<b>Game:</b> ' + game.gamesPlayed
-
 		+ '<br><b>State:</b> ' + ( game.isStopped() ?
 									'Stopped' :
 									( game.isPlaying() ?
 										'Playing' : 
 										'Paused' ) )
 
-		+ '<br><br><a href="adm-pause-toggle">Pause/Resume</a> | <a href="adm-stop">Stop</a> | <a href="adm-reset">Reset</a> '
+		+ '<br><br><a href="adm-pause-toggle">Resume/Pause</a> | <a href="adm-stop">Stop</a> | <a href="adm-reset">Reset</a> '
 
 		+ '<hr><b>Active Players:</b><br>';
 
@@ -122,11 +122,12 @@ Template.index = function(res, req, game)
 
 		if( !player.onQueue )
 		{
-			out += '<div>* ' + player.name + ' | Cards: ' + player.hand.length + ' | Iddle: ' + (now - player._time ) + 's ' ;
+			out += '<div>* ' + player.name + ' | Iddle: ' + (now - player._time ) + 's ' ;
 
 			if( !game.isStopped() )
 			{
-				out += ' | <a href="adm-give/' + i + '/2">Give +2</a>'
+				out += ' | Cards: ' + player.hand.length
+					+  ' | <a href="adm-give/' + i + '/2">Give +2</a>'
 					+  ' | <a href="adm-give/' + i + '/4">Give +4</a>' ;
 			}
 			
