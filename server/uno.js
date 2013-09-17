@@ -659,7 +659,7 @@ app.get('/adm-kick/:pid', function (req, res) {
 		else
 			admLog(req, 'Error kicking player \'' + name + '\'') ;
 
-		Template.redirect(res, 'adm-index');
+		Template.redirect(res, '../adm-index');
 		return;
 	}
 
@@ -787,11 +787,11 @@ app.get('/adm-give/:player/:count', function (req, res) {
 			admLog(req, "Gave player '" + player.name + "' " + i + " cards");
 		}
 
-		Template.redirect(res, 'adm-index');
+		Template.redirect(res, '../../adm-index');
 		return;
 	}
 
-	Template.redirect(res, 'adm-login');
+	Template.redirect(res, '../../adm-login');
 });
 
 
