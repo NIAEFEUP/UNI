@@ -1,17 +1,29 @@
 body {
-	background-color:#8CA98A;
-	font-family:sans-serif;
+	background-color:#DBCA94;
+	font-family: 'Raleway', sans-serif;
+	padding:0;
+	margin:0;
 }
 
 
 /* Interface */
 
 h1 {
+	color:#EF5028;
 	text-align:center;
+	margin:0;
+	padding:0.2em;
+	font-size:32pt;
+	text-shadow:0px 1px 0px #000000,
+				0px 2px 0px #000000,
+				0px 3px 0px #000000,
+				0px -1px 0px #000000,
+				1px 0px 0px #000000,
+				-1px 0px 0px #000000;
 }
 
 #cardPile {
-	background-color: #7C997A;
+	background-color: #E8DEBB;
 	width: 220px;
 	height: 320px;
 	margin: 0 auto; /* Centrar Div */
@@ -19,7 +31,7 @@ h1 {
 
 #currentPlayers {
 	text-align: center;
-	font-size: 24px;
+	font-size: 16pt;
 }
 
 
@@ -27,17 +39,26 @@ h1 {
 	text-align:center;
 }
 
+#room {
+	text-align:right;
+	font-size:16pt;
+	padding:0.2em;
+	padding-right:1em;
+	font-weight:bold;
+}
+
 
 .player {
 	margin:0.5em;
 	padding:0.5em;
-	border:2px solid #7C997A;
+	font-size:24pt;
+	background-color:#C4BFBB;
 	display:inline-block;
 }
 
 .active {
 	font-weight:bold;
-	background-color:#9CB99A;
+	background-color:#EF5028;
 }
 
 /* Cartas */
