@@ -1,3 +1,5 @@
+﻿var playurl="http://ni.fe.up.pt/uni/";
+var room=window.location.hash?window.location.hash.substring(1):"1";
 var turn=0;
 var activePlayer=-1;
 var players=new Array();
@@ -22,12 +24,11 @@ function Card(color,value) {
 	}
 	switch(parseInt(value))
 	{
-		case 10:this.valuetext="<i class='icon-blocked'></i>";break;
-		case 11:this.valuetext="+2";break;
-		case 12:this.valuetext="<i class='icon-loop'></i>";break;
-		case 13:this.valuetext="<i class='icon-wild'></i>";break;
-		case 14:this.valuetext="+4";break;
-		default:this.valuetext=value;
+		case 10:this.value="<i class='icon-blocked'></i>";break;
+		case 11:this.value="+2";break;
+		case 12:this.value="<i class='icon-loop'></i>";break;
+		case 13:this.value="<i class='icon-wild'></i>";break;
+		case 14:this.value="+4";break;
 	}
 }
 
@@ -76,7 +77,7 @@ function recieveCard(color,value) {
 }
 
 function updateStatus() {
-	$.getJSON("http://localhost:3000/status?callback=?", function(data) {
+	$.getJSON(playurl+room+"/status?callback=?", function(data) {
 		if (data.h) {
 			recieveCard(data.h.c,data.h.t);
 		}
@@ -89,7 +90,7 @@ function updateStatus() {
 }
 
 function updateLobby() {
-	$.getJSON("http://localhost:3000/lobby?callback=?", function(data) {
+	$.getJSON(playurl+room+"/lobby?callback=?", function(data) {
 		if (data.p) {
 			players=data.p;
 			updateCurrentPlayers();
@@ -103,6 +104,9 @@ function updateLobby() {
 	});
 }
 
+$(document).ready(function() {
+	$("#room").html("Sala "+room);
+	updateLobby();
+	updateStatus();
 
-updateLobby();
-updateStatus();
+});
