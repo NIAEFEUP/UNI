@@ -17,7 +17,7 @@ Game.STATE = {
 }
 
 Game.PLAYER_LIMIT = 10;
-Game.MIN_PLAYER = 2;
+Game.MIN_PLAYER = 1;
 
 Game.isColorValid = function(color) {
 
@@ -65,6 +65,10 @@ Game.prototype.isStopped = function() {
 Game.prototype.isPlaying = function() {
 
 	return this.state === Game.STATE.PLAYING ;
+}
+Game.prototype.isPaused = function() {
+
+	return this.state === Game.STATE.PAUSED ;
 }
 
 
@@ -289,7 +293,7 @@ Game.prototype.playCard = function(card, color) {
 
 		case Card.TYPE.REVERSE:
 			
-			if( ( this.activePlayers - this.playersOut ) === 2 )
+			if( ( this.activePlayers.length - this.playersOut ) === 2 )
 				this.moveToNextPlayer();
 			else
 				this.reverseDirection();

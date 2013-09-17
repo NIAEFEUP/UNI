@@ -90,9 +90,63 @@ function Template() {}
 Template.login = function(res, req)
 {
 		var 
-		out  = '<html><head></head><body>Enter Code:<br>';
+		out  = '<html><head></head><body>Admin Code:<br>';
 		out += '<form method="POST"><input type="text" name="code"/><br><input type="submit" value="Enviar"></form>';
 		out += '</body></html>';
 
 		respondHTML(res, req, out, false);
+};
+
+Template.index = function(res, req, game)
+{
+
+	var i,player,now = Utils.getTime(),
+
+	out  = '<html><head></head><body>'
+
+		+ '<b>Game:</b> ' + game.gamesPlayed
+
+		+ '<br><b>State:</b> ' + ( game.isStopped() ?
+									'Stopped' :
+									( game.isPlaying() ?
+										'Playing' : 
+										'Paused' ) )
+
+		+ '<br><br><a href="adm-pause-toggle">Pause/Resume</a> | <a href="adm-stop">Stop</a> | <a href="adm-reset">Reset</a> '
+
+		+ '<hr><b>Active Players:</b><br>';
+
+	for( i = 0; i < game.activePlayers.length; i++ )
+	{
+		player = game.activePlayers[i] ;
+
+		if( !player.onQueue )
+		{
+			out += '<div>* ' + player.name + ' | Cards: ' + player.hand.length + ' | Iddle: ' + (now - player._time ) + 's ' ;
+
+			if( !game.isStopped() )
+			{
+				out += ' | <a href="adm-give/' + i + '/2">Give +2</a>'
+					+  ' | <a href="adm-give/' + i + '/4">Give +4</a>' ;
+			}
+			
+			out += ' | <a href="adm-kick/' + player.id + '">Kick</a>'
+				+  '</div>';
+		}
+	}
+
+	out += '<hr><b>Queued Players:</b>';
+
+	for( i = 0; i < game.playerQueue.length; i++ )
+	{
+		player = game.playerQueue[i] ;
+
+		out += '<div>* ' + player.name + ' | ' + (now - player._time ) + 's '
+				+ ' | <a href="adm-kick/' + player.id + '">Kick</a>'
+				+ '</div>';
+	}
+
+	out += '<hr><a href="adm-logout">Logout</a></body></html>' ;
+
+	respondHTML(res, req, out, false);
 };

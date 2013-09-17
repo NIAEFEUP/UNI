@@ -72,69 +72,6 @@ function getSamePlayer(pid)
 	return false;
 }
 
-// function addCrossDomainHeaders(res, req)
-// {
-// 	if( allowCrossDomain )
-// 	{
-// 		res.header('Access-Control-Allow-Origin',      req.headers.origin);
-// 		res.header('Access-Control-Allow-Methods',     'GET, POST');
-// 		res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-// 		res.header('Access-Control-Allow-Credentials', true);
-// 	}
-// }
-
-// function respondZero(res, req, statusCode, crossDomain)
-// {
-// 	if(    crossDomain === undefined
-// 		|| crossDomain === true )
-// 		addCrossDomainHeaders(res, req);
-	
-// 	res.writeHead(statusCode, {'Content-Length': 0});
-
-// 	res.end();
-// }
-
-// function respond(res , req, obj, crossDomain, callback, size)
-// {
-// 	var out = JSON.stringify(obj),
-// 		len;
-
-// 	if (callback)
-// 		out=callback+'('+out+')';
-
-// 	len = Buffer.byteLength(out, 'UTF-8');
-
-// 	if ( size === undefined )
-// 		size = len;
-// 	else
-// 		size += len;
-	
-// 	if(    crossDomain === undefined
-// 		|| crossDomain === true )
-// 		addCrossDomainHeaders(res, req);
-
-// 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
-// 						'Content-Length': size});
-
-// 	res.write(out);
-// 	res.end();
-// }
-
-// function respondHTML(res , req, out, crossDomain)
-// {
-// 	var size = Buffer.byteLength(out, 'UTF-8');
-	
-// 	if(    crossDomain === undefined
-// 		|| crossDomain === true )
-// 		addCrossDomainHeaders(res, req);
-
-// 	res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8',
-// 						'Content-Length': size});
-
-// 	res.write(out);
-// 	res.end();
-// }
-
 
 function checkGameEnded()
 {
@@ -564,19 +501,16 @@ app.post('/play/:type/:color', function (req, res) {
 });
 
 
-
-
-app.post('/quit', function (req, res) {
-
-	var pid = req.session.pid,
-		player = players[pid],p,
-		removed = false,
-		queue, playerTurn = false,
-		playing = !game.isStopped();
-
-	if( player )
+function quitPlayer(player)
+{
+	if(    player
+		&& player instanceof Player)
 	{
-		queue = player.onQueue;
+		var p, pid = player.id,
+			removed = false,
+			queue = player.onQueue,
+			playerTurn = false,
+			playing = !game.isStopped();
 
 		if( queue )
 			removed = removeQueuedPlayer( player ) ;
@@ -598,11 +532,27 @@ app.post('/quit', function (req, res) {
 			    && playerTurn )
 				game.moveToNextRound();
 		}
-					
+
+		return removed ;
+	}
+
+	return false;
+}
+
+
+app.post('/quit', function (req, res) {
+
+	var pid = req.session.pid,
+		player = ( player[pid] ? players[pid] : false ),
+		p, queued ;
+
+	if( player )
+	{
+		queued = player.onQueue ;
 
 		var msg = "Player exited '" + player.name + "' [id: " + player.id + "]" ;
 
-		if( removed )
+		if( quitPlayer( player ) )
 		{
 			console.log( msg + ( queue ? ": removed from queue" : '' ) );
 
@@ -671,9 +621,20 @@ app.post('/adm-login', function (req, res) {
 });
 
 
-app.get('/adm-logout', function (req, res) {
+app.get('/adm-index', function (req, res) {
 
-	var logged = req.session.logged
+	if( true || req.session.logged )
+	{
+
+		Template.view.index(res, req, game);
+		return;
+	}
+
+	Template.redirect(res, '/adm-login');
+});
+
+
+app.get('/adm-logout', function (req, res) {
 
 	if( req.session.logged )
 	{
@@ -686,31 +647,122 @@ app.get('/adm-logout', function (req, res) {
 });
 
 
-app.post('/adm-give/:player/:count', function (req, res) {
+app.get('/adm-kick/:pid', function (req, res) {
+
+	if( true || req.session.logged )
+	{
+		var pid = parseInt( req.params.pid ),
+			player = ( players[pid] ? players[pid] : false ),
+			name = ( player ? player.name : null );
+
+		if( player && quitPlayer( player ) )
+			admLog(req, 'Player \'' + name + '\' kicked') ;
+		else
+			admLog(req, 'Error kicking player \'' + name + '\'') ;
+
+		Template.redirect(res, '/adm-index');
+		return;
+	}
+
+	Template.redirect(res, '/adm-login');
+});
+
+app.get('/adm-pause-toggle', function (req, res) {
+
+	if( true || req.session.logged )
+	{
+		if( !game.isStopped() )
+		{
+			if( game.isPlaying() )
+			{
+				game.state = Game.STATE.PAUSED ;
+				admLog(req, 'Game paused');
+			}
+			else
+			if( game.isPaused() )
+			{
+				var i,player;
+
+				for(i = 0; i < game.activePlayers.length; i++)
+				{
+					player = game.activePlayers[i];
+
+					if(    player
+						&& !player.onQueue )
+						player.updateTime();
+				}
+
+				admLog(req, 'Game resumed');
+				game.state = Game.STATE.PLAYING ;
+			}
+		}
+
+		Template.redirect(res, '/adm-index');
+		return;
+	}
+
+	Template.redirect(res, '/adm-login');
+});
+
+app.get('/adm-stop', function (req, res) {
+
+	if( true || req.session.logged )
+	{
+		if( !game.isStopped() )
+		{
+			var i,player;
+
+			for( i = 0; i < game.activePlayers.length; i++ )
+			{
+				if(    player
+					&& !player.onQueue )
+				{
+					player.reset();
+					game.playerQueue.push( player );
+				}
+			}
+
+			game.gamesPlayed++;
+			game.reset();
+
+			admLog(req, 'Game stopped');
+		}
+
+		Template.redirect(res, '/adm-index');
+		return;
+	}
+
+	Template.redirect(res, '/adm-login');
+});
+
+
+app.get('/adm-give/:player/:count', function (req, res) {
 
 	var id = parseInt(req.params.player),
 		count = parseInt(req.params.count),
 		i,player;
 
-	if(    req.session.logged
-		&& id !== undefined
-		&& count !== undefined
-		&& id >= 0
-		&& id < game.activePlayers.length
-		&& !game.isStopped() )
+	if( true || req.session.logged )
 	{
-		player = game.activePlayers[id];
+		if(    id !== undefined
+			&& count !== undefined
+			&& id >= 0
+			&& id < game.activePlayers.length
+			&& !game.isStopped() )
+		{
+			player = game.activePlayers[id];
 
-		i=game.giveCard(player, count);
-		game.countPlayerCards();
+			i = game.giveCard(player, count);
+			game.countPlayerCards();
 
-		admLog(req, "Gave player '" + player.name + "' " + i + " cards");
+			admLog(req, "Gave player '" + player.name + "' " + i + " cards");
+		}
 
-		Template.zero(res, req, 200, false);
+		Template.redirect(res, '/adm-index');
 		return;
 	}
 
-	Template.zero(res, req, 403, false);
+	Template.redirect(res, '/adm-login');
 });
 
 
@@ -740,35 +792,37 @@ game.startTimer(function(){
 		playing = !game.isStopped();
 	    now = Utils.getTime() - clientTimeout;
 
-	for( i = game.activePlayers.length - 1 ; i >= 0 ; i-- )
+	if( !game.isPaused() )
 	{
-		player = game.activePlayers[i];
-
-		if(    !player.onQueue
-			&& player._time < now )
+		for( i = game.activePlayers.length - 1 ; i >= 0 ; i-- )
 		{
+			player = game.activePlayers[i];
 
-			console.log( "Player disconnected '" + player.name + "' [id: " + player.id + "]" );
-
-			if( !removeActivePlayer(player, i) )
-				console.log( "Error removing player!" );
-
-			if(    playing
-				&& game.curPlayer === i )
+			if(    !player.onQueue
+				&& player._time < now )
 			{
-				disconnectedPlayerTurn = true;
-				console.log("* Disconnected player turn");
+				console.log( "Player disconnected '" + player.name + "' [id: " + player.id + "]" );
+
+				if( !removeActivePlayer(player, i) )
+					console.log( "Error removing player!" );
+
+				if(    playing
+					&& game.curPlayer === i )
+				{
+					disconnectedPlayerTurn = true;
+					console.log("* Disconnected player turn");
+				}
+
+				deadCount++;
 			}
-
-			deadCount++;
 		}
-	}
 
-	if(    deadCount > 0
-		&& playing
-		&& !checkGameEnded()
-		&& disconnectedPlayerTurn )
-		game.moveToNextRound();
+		if(    deadCount > 0
+			&& playing
+			&& !checkGameEnded()
+			&& disconnectedPlayerTurn )
+			game.moveToNextRound();
+	}
 
 }, deadTimerInterval);
 
