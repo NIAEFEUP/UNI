@@ -579,7 +579,7 @@ app.get('/adm-login', function (req, res) {
 
 	if( req.session.logged )
 	{
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
@@ -600,7 +600,7 @@ app.post('/adm-login', function (req, res) {
 		if( !logged )
 			admLog(req, "Successful login");
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
@@ -618,7 +618,7 @@ app.get('/adm-index', function (req, res) {
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 
@@ -631,7 +631,7 @@ app.get('/adm-logout', function (req, res) {
 		admLog(req, "Successful logout");
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 
@@ -648,11 +648,11 @@ app.get('/adm-kick/:pid', function (req, res) {
 		else
 			admLog(req, 'Error kicking player \'' + name + '\'') ;
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 app.get('/adm-pause-toggle', function (req, res) {
@@ -685,11 +685,11 @@ app.get('/adm-pause-toggle', function (req, res) {
 			}
 		}
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 app.get('/adm-stop', function (req, res) {
@@ -719,11 +719,11 @@ app.get('/adm-stop', function (req, res) {
 			admLog(req, 'Game stopped');
 		}
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 app.get('/adm-reset', function (req, res) {
@@ -746,11 +746,11 @@ app.get('/adm-reset', function (req, res) {
 
 		admLog(req, 'Game reset');
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 
@@ -776,11 +776,11 @@ app.get('/adm-give/:player/:count', function (req, res) {
 			admLog(req, "Gave player '" + player.name + "' " + i + " cards");
 		}
 
-		Template.redirect(res, '/adm-index');
+		Template.redirect(res, 'adm-index');
 		return;
 	}
 
-	Template.redirect(res, '/adm-login');
+	Template.redirect(res, 'adm-login');
 });
 
 
