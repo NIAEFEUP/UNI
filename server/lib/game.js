@@ -17,7 +17,7 @@ Game.STATE = {
 }
 
 Game.PLAYER_LIMIT = 10;
-Game.MIN_PLAYER = 4;
+Game.MIN_PLAYER = 2;
 
 Game.isColorValid = function(color) {
 
