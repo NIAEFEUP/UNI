@@ -6,8 +6,7 @@ var express = require('express') ,
 	base = '',
 	port = 3000,
 	deadTimerInterval = 5000,
-	clientTimeout = 60,
-	allowCrossDomain = true;
+	clientTimeout = 60;
 
 for(var i = 0; i < args.length; i++)
 {
@@ -44,6 +43,8 @@ require('./lib/deck');
 require('./lib/game');
 require('./lib/player');
 
+var Template = require('./lib/template');
+
 
 var players = [],
     _pid = 0,
@@ -71,53 +72,69 @@ function getSamePlayer(pid)
 	return false;
 }
 
-function addCrossDomainHeaders(res, req)
-{
-	if( allowCrossDomain )
-	{
-		res.header('Access-Control-Allow-Origin',      req.headers.origin);
-		res.header('Access-Control-Allow-Methods',     'GET, POST');
-		res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-		res.header('Access-Control-Allow-Credentials', true);
-	}
-}
+// function addCrossDomainHeaders(res, req)
+// {
+// 	if( allowCrossDomain )
+// 	{
+// 		res.header('Access-Control-Allow-Origin',      req.headers.origin);
+// 		res.header('Access-Control-Allow-Methods',     'GET, POST');
+// 		res.header('Access-Control-Allow-Headers',     'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+// 		res.header('Access-Control-Allow-Credentials', true);
+// 	}
+// }
 
-function respondZero(res, req, statusCode, crossDomain)
-{
-	if(    crossDomain === undefined
-		|| crossDomain === true )
-		addCrossDomainHeaders(res, req);
+// function respondZero(res, req, statusCode, crossDomain)
+// {
+// 	if(    crossDomain === undefined
+// 		|| crossDomain === true )
+// 		addCrossDomainHeaders(res, req);
 	
-	res.writeHead(statusCode, {'Content-Length': 0});
+// 	res.writeHead(statusCode, {'Content-Length': 0});
 
-	res.end();
-}
+// 	res.end();
+// }
 
-function respond(res , req, obj, crossDomain, callback, size)
-{
-	var out = JSON.stringify(obj),
-		len;
+// function respond(res , req, obj, crossDomain, callback, size)
+// {
+// 	var out = JSON.stringify(obj),
+// 		len;
 
-	if (callback)
-		out=callback+'('+out+')';
+// 	if (callback)
+// 		out=callback+'('+out+')';
 
-	len = Buffer.byteLength(out, 'UTF-8');
+// 	len = Buffer.byteLength(out, 'UTF-8');
 
-	if ( size === undefined )
-		size = len;
-	else
-		size += len;
+// 	if ( size === undefined )
+// 		size = len;
+// 	else
+// 		size += len;
 	
-	if(    crossDomain === undefined
-		|| crossDomain === true )
-		addCrossDomainHeaders(res, req);
+// 	if(    crossDomain === undefined
+// 		|| crossDomain === true )
+// 		addCrossDomainHeaders(res, req);
 
-	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
-						'Content-Length': size});
+// 	res.writeHead(200, {'Content-Type': 'application/json; charset=utf-8',
+// 						'Content-Length': size});
 
-	res.write(out);
-	res.end();
-}
+// 	res.write(out);
+// 	res.end();
+// }
+
+// function respondHTML(res , req, out, crossDomain)
+// {
+// 	var size = Buffer.byteLength(out, 'UTF-8');
+	
+// 	if(    crossDomain === undefined
+// 		|| crossDomain === true )
+// 		addCrossDomainHeaders(res, req);
+
+// 	res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8',
+// 						'Content-Length': size});
+
+// 	res.write(out);
+// 	res.end();
+// }
+
 
 function checkGameEnded()
 {
@@ -266,7 +283,7 @@ app.get('/status', function (req, res) {
 
 	if( game.isStopped() )
 	{
-		respondZero(res, req, 204);
+		Template.zero(res, req, 204);
 
 		return;
 	}
@@ -274,7 +291,7 @@ app.get('/status', function (req, res) {
 /*	if(    req.session.lround === game.round
 		&& req.query.force !== 'true' )
 	{
-		respondZero(res, req, 304);
+		Template.zero(res, req, 304);
 
 		return;
 	}*/
@@ -295,7 +312,7 @@ app.get('/status', function (req, res) {
 
 	req.session.lround = game.round ;
 
-	respond(res, req, out, true, req.query.callback);
+	Template.json(res, req, out, true, req.query.callback);
 
 });
 
@@ -320,7 +337,7 @@ app.get('/lobby', function (req, res) {
 	if( player )
 		player.updateTime();
 
-	respond(res, req, out, true, req.query.callback);
+	Template.json(res, req, out, true, req.query.callback);
 });
 
 
@@ -343,7 +360,7 @@ app.post('/lobby', function (req, res) {
 
 		if( !name )
 		{
-			respondZero(res, req, 400);
+			clear-both(res, req, 400);
 
 			return;
 		}
@@ -362,7 +379,7 @@ app.post('/lobby', function (req, res) {
 	var out = { n: name,
 		  		q: player.onQueue };
 
-	respond(res, req, out, true, req.body.callback);
+	Template.json(res, req, out, true, req.body.callback);
 });
 
 app.post('/vote-start', function (req, res) {
@@ -392,14 +409,14 @@ app.post('/vote-start', function (req, res) {
 
 				}
 
-				respondZero(res, req, 200);
+				Template.zero(res, req, 200);
 
 				return;
 			}
 		}
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 
@@ -413,13 +430,13 @@ app.get('/accept-draw', function (req, res) {
 
 		if( cPlayer && game.acceptDraw() )
 		{
-			respondZero(res, req, 200);
+			Template.zero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 app.get('/get-one', function (req, res) {
@@ -436,13 +453,13 @@ app.get('/get-one', function (req, res) {
 			game.giveCard( cPlayer, 1 );
 			cPlayer.hasDrawn = true;
 
-			respondZero(res, req, 200);
+			Template.zero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 app.get('/skip-turn', function (req, res) {
@@ -457,13 +474,13 @@ app.get('/skip-turn', function (req, res) {
 			game.acceptDraw();
 			game.moveToNextRound();
 
-			respondZero(res, req, 200);
+			Template.zero(res, req, 200);
 
 			return;
 		}
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 
@@ -533,7 +550,7 @@ app.post('/play/:type/:color', function (req, res) {
 					if( nextRound )
 						game.moveToNextRound();
 
-					respondZero(res, req, 200);
+					Template.zero(res, req, 200);
 
 					return;
 				}
@@ -543,7 +560,7 @@ app.post('/play/:type/:color', function (req, res) {
 		}
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 
@@ -589,7 +606,7 @@ app.post('/quit', function (req, res) {
 		{
 			console.log( msg + ( queue ? ": removed from queue" : '' ) );
 
-			respondZero(res, req, 200);
+			Template.zero(res, req, 200);
 
 			return;
 		}
@@ -597,7 +614,7 @@ app.post('/quit', function (req, res) {
 		console.log( msg + ": error exiting" );
 	}
 
-	respondZero(res, req, 403);
+	Template.zero(res, req, 403);
 });
 
 
@@ -614,6 +631,21 @@ function admLog(req, msg)
 	console.log("[ADM " + req.ip + "] " + msg );
 
 }
+app.get('/adm-login', function (req, res) {
+
+	var logged = req.session.logged,
+		code = req.body.code;
+
+	if( !req.session.logged )
+	{
+
+		Template.view.login(res, req);
+		return;
+	}
+
+	Template.zero(res, req, 403, false);
+});
+
 app.post('/adm-login', function (req, res) {
 
 	var logged = req.session.logged,
@@ -625,19 +657,21 @@ app.post('/adm-login', function (req, res) {
 	{
 		req.session.logged = true;
 
-		admLog(req, "Successful login");
+		if( !logged )
+			admLog(req, "Successful login");
 
-		respondZero(res, req, 200, false);
+
+		Template.redirect(res, '/adm-index');
 		return;
 	}
 
 	admLog(req, "Bad login");
 
-	respondZero(res, req, 403, false);
+	Template.view.login(res, req);
 });
 
 
-app.post('/adm-logout', function (req, res) {
+app.get('/adm-logout', function (req, res) {
 
 	var logged = req.session.logged
 
@@ -646,12 +680,9 @@ app.post('/adm-logout', function (req, res) {
 		req.session.logged = false;
 
 		admLog(req, "Successful logout");
-
-		respondZero(res, req, 200, false);
-		return;
 	}
 
-	respondZero(res, req, 403, false);
+	Template.redirect(res, '/adm-login');
 });
 
 
@@ -675,13 +706,12 @@ app.post('/adm-give/:player/:count', function (req, res) {
 
 		admLog(req, "Gave player '" + player.name + "' " + i + " cards");
 
-		respondZero(res, req, 200, false);
+		Template.zero(res, req, 200, false);
 		return;
 	}
 
-	respondZero(res, req, 403, false);
+	Template.zero(res, req, 403, false);
 });
-
 
 
 
@@ -694,7 +724,7 @@ app.all('*', function (req, res) {
 
 	console.log('Wrong request received: ' + req.path + " [" + req.method + "]");
 
-	respondZero(res, req, 404, false);
+	Template.zero(res, req, 404, false);
 });
 
 app.listen(port);
