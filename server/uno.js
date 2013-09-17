@@ -27,16 +27,27 @@ for(var i = 0; i < args.length; i++)
 }
 
 
-app.use(express.cookieParser());
-app.use(express.bodyParser());
-app.use(express.session({ key: 'uno',
-						  secret: 'ni is the best, so fuck the rest',
-						  cookie: { path: '/' }
-						  } ));
-app.use(base, app.router);
-app.enable('trust proxy');
-app.disable('x-powered-by');
+app.configure(function(){
+	
+	app.use(express.cookieParser());
+	app.use(express.bodyParser());
+	app.use(express.session({ key: 'uno',
+							  secret: 'ni is the best, so fuck the rest',
+							  cookie: { path: '/' }
+							  } ));
 
+	app.use(function (req, res, next) {
+	    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
+	    res.setHeader('Server', 'uNI Game Server');
+
+	    return next();
+	});
+
+	app.enable('trust proxy');
+	app.disable('x-powered-by');
+
+	app.use(base, app.router);
+});
 
 require('./lib/utils');
 require('./lib/deck');
