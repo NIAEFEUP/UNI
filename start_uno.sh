@@ -1,9 +1,8 @@
 #!/bin/bash
 
+ROOMS=2
 
-TOTAL_ROOMS=2
-
-for i in {1..$TOTAL_ROOMS}; do
+for i in $(seq 1 $ROOMS); do
   port=$((3000 + $i - 1))
   
   echo "Launching room $i at port $port"
