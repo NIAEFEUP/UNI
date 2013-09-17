@@ -72,7 +72,8 @@ function getSamePlayer(pid)
 {
 	var player = game.getPlayer();
 
-	if(    player 
+	if(    pid !== undefined
+		&& player 
 		&& player.id === pid
 		&& !player.onQueue )
 	{
@@ -347,7 +348,7 @@ app.post('/lobby', function (req, res) {
 
 		if( !name )
 		{
-			clear-both(res, req, 400);
+			Template.zero(res, req, 400);
 
 			return;
 		}
@@ -374,7 +375,7 @@ app.post('/vote-start', function (req, res) {
 	if( game.isStopped() )
 	{
 		var pid = req.session.pid,
-			player = (pid !== undefined ) ? players[pid] : false ;
+			player = ( pid !== undefined ) ? players[pid] : false ;
 
 		if( player )
 		{
@@ -546,7 +547,7 @@ app.post('/play/:type/:color', function (req, res) {
 app.post('/quit', function (req, res) {
 
 	var pid = req.session.pid,
-		player = ( player[pid] ? players[pid] : false ),
+		player = ( pid !== undefined ) ? players[pid] : false ,
 		queued ;
 
 	if( player )
