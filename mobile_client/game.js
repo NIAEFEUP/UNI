@@ -6,6 +6,7 @@ var active=false; //boolean para bloquear inputs durante chamadas ao servidor
 
 //flags
 var colorSelBuffer="";
+var cardupdate=false;
 var drawbuffer=false;
 var skipdraw=false;
 var readychecked=false;
@@ -113,7 +114,11 @@ function QueryStatus()
 						$("#statusmsg").text("À espera da sua vez");
 
 						$("#statusmsg").show();		
-
+							if (!cardupdate){
+							$("#cardsdiv").html(ParseMao(data.l));	
+							console.log('done cardsupdate');
+							cardupdate=true;
+							}
 						}
 
 						else
@@ -129,6 +134,7 @@ function QueryStatus()
 					}	
 
 					else{
+						cardupdate=false;
 						active=true;
 						if (data.b>0){
 							$("#statusmsg").text("Tem "+data.b+" cartas em espera.");
@@ -368,7 +374,10 @@ $(document).ready(function() {
 	
 	$(document).on('click','.card',function(event){
 		if (active==true&&gameactive==true){	
+			$("#statusmsg").text("A processar jogada");
+		$("#statusmsg").show();
 			playCard($(this));
+			
 		}
 		console.log($(this).data("color")+" "+$(this).data("value")+" "+active);
 	});
