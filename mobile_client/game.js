@@ -8,6 +8,7 @@ var active=false; //boolean para bloquear inputs durante chamadas ao servidor
 var inqueue=true;
 var gameactive=false;
 var drawbuffer=false;
+var skipdraw=false;
 var readychecked=false;
 var inlobby=false;
 var ingame=false;
@@ -67,6 +68,18 @@ function ParseMao(mao )
 function QueryStatus()
 {
 	ingame=true;
+	if (skipdraw)
+	{
+		$("#drawcard").hide();
+		$("#skipturn").show();
+	}
+	else
+	{
+		
+		$("#drawcard").show();
+		$("#skipturn").hide();
+	}
+	
 	$.ajax({
 		url: playurl+room+'status',
 		type: 'GET',
@@ -203,15 +216,59 @@ function playCard(card){
 	value=card.data("value");
 	$.post(playurl+room+"play/"+value+"/"+color,{},function(data){
 		//fixe
+		
+		skipdraw=false;
 		console.log("play sucessefull with "+color+" "+value+" ");
 	},'json').fail(function(jqxhr, textStatus, error ) {
 		var err = textStatus + ', ' + error;
 		console.log( "playRequest with "+color+" "+value+" Failed: " + err);
+		active=true; 
+		$("#statusmsg").text("Jogada inválida.");
+		$("#statusmsg").show();
+	}).always(function(){
 		active=true;
-		$("#loading").hide();
-		$('#lobbyerrormsg').text("Erro a comunicar jogada. Por favor tente outra vez.");
-		$('#lobbyerrormsg').show();
-		$('#lobby').show();
+		QueryStatus();
+	});
+}
+
+function skipPlay(){
+	active=false;
+	clearTimeout(timerfunc);
+	color=card.data("color");
+	value=card.data("value");
+	$.getJSON(playurl+room+"/skip-turn",{},function(data){
+		//fixe
+		
+		skipdraw=false;
+		console.log("skip sucessefull");
+	},'json').fail(function(jqxhr, textStatus, error ) {
+		var err = textStatus + ', ' + error;
+		console.log( "skipRequest Failed: " + err);
+		active=true;
+		$("#statusmsg").text("Erro a comunicar passagem. Por favor tente outra vez.");
+		$("#statusmsg").show();
+	}).always(function(){
+		active=true;
+		QueryStatus();
+	});
+}
+
+function drawOne(){
+	active=false;
+	clearTimeout(timerfunc);
+	color=card.data("color");
+	value=card.data("value");
+	$.getJSON(playurl+room+"/get-one",{},function(data){
+		//fixe
+		
+		skipdraw=true;
+		console.log("draw sucessefull");
+	},'json').fail(function(jqxhr, textStatus, error ) {
+		var err = textStatus + ', ' + error;
+		console.log( "drawRequest Failed: " + err);
+		active=true;
+		$("#statusmsg").text("Erro a comunicar pedido. Por favor tente outra vez.");
+		$("#statusmsg").show();
 	}).always(function(){
 		active=true;
 		QueryStatus();
@@ -278,28 +335,7 @@ $(document).ready(function() {
 		})*/;
 	});
 	
-	
-	$("#drawcard").click(function(){
-		if (active==true&&gameactive==true){
-			
-		/*
-		$.post(playurl,{//args
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-				{
 
-				}else{
-					//TODO  sacar as cartas
-				}
-		}).fail(
-		function(){
-			
-		});*/
-		}
-		console.log("pick a card "+active);
-		
-	});
 	
 	
 	$(document).on('click','.card',function(event){
@@ -333,27 +369,21 @@ $(document).ready(function() {
 	});
 	
 	$("#skipturn").click(function(){
-		if (active==true&&gameactive==true){
-			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+		if (active && gameactive && skipdraw){
+			skipPlay();	
+		
 		}
-		console.log("skipturn"+active);
+		console.log("skipturn "+active);
+		
+	});
+	
+		
+	$("#drawcard").click(function(){
+		if (active && gameactive && !skipdraw){
+			drawOne();	
+		
+		}
+		console.log("drawcard "+active);
 		
 	});
 	
