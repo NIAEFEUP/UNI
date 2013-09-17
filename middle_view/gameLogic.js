@@ -78,25 +78,29 @@ function recieveCard(color,value) {
 
 function updateStatus() {
 	$.getJSON(playurl+room+"/status?callback=?", function(data) {
-		if (data.h) {
-			recieveCard(data.h.c,data.h.t);
+		if (data) {
+			if (data.h) {
+				recieveCard(data.h.c,data.h.t);
+			}
+			if (data.p!==undefined) {
+				activePlayer=data.p;
+				updateCurrentPlayers();
+			}
+			cards=data.c;
 		}
-		if (data.p!==undefined) {
-			activePlayer=data.p;
-			updateCurrentPlayers();
-		}
-		cards=data.c;
 	}).always(function() {setTimeout(updateStatus,1000);});
 }
 
 function updateLobby() {
 	$.getJSON(playurl+room+"/lobby?callback=?", function(data) {
-		if (data.p) {
-			players=data.p;
-			updateCurrentPlayers();
-			updateVotes(data.tv,data.ps);
+		if (data) {
+			if (data.p) {
+				players=data.p;
+				updateCurrentPlayers();
+				updateVotes(data.tv,data.ps);
+			}
+			gameStatus=data.s;
 		}
-		gameStatus=data.s;
 	}).always(function() {
 		if (gameStatus==0) {
 			setTimeout(updateLobby,1000);

@@ -91,6 +91,7 @@ function QueryStatus()
 			{
 				if( res.status === 204 )
 				{	
+					gameactive=false;
 					$("#statusmsg").text("Jogo terminado");
 						$("#statusmsg").show();	
 					console.log('Jogo desativado');
@@ -450,7 +451,7 @@ $(document).ready(function() {
 	});
 	
 	$("#exitbtn").click(function(){
-		if (active==true){
+		if (active==true||!gameactive){
 			active=false;
 		$.post(playurl+room+"quit",function(data){
 				active=true;
