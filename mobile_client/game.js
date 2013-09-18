@@ -146,6 +146,7 @@ function QueryStatus()
 						{
 							$("#statusmsg").text("É a sua vez");
 							$("#statusmsg").show();		
+							$("acceptdraw").hide();
 						
 						}
 						$("#cardsdiv").html(ParseMao(data.l));	
@@ -273,7 +274,7 @@ function playCard(card){
 function skipPlay(){
 	active=false;
 	clearTimeout(timerfunc);
-	$.getJSON(playurl+room+"/skip-turn",{},function(data){
+	$.getJSON(playurl+room+"skip-turn",{},function(data){
 		//fixe
 		
 		skipdraw=false;
@@ -293,7 +294,7 @@ function skipPlay(){
 function drawOne(){
 	active=false;
 	clearTimeout(timerfunc);
-	$.getJSON(playurl+room+"/get-one",{},function(data){
+	$.getJSON(playurl+room+"get-one",{},function(data){
 		//fixe
 		
 		skipdraw=true;
@@ -301,7 +302,27 @@ function drawOne(){
 	},'json').fail(function(jqxhr, textStatus, error ) {
 		var err = textStatus + ', ' + error;
 		console.log( "drawRequest Failed: " + err);
+		
+		$("#statusmsg").text("Erro a comunicar pedido. Por favor tente outra vez.");
+		$("#statusmsg").show();
+	}).always(function(){
 		active=true;
+		QueryStatus();
+	});
+}
+
+function acceptDraw(){
+	active=false;
+	clearTimeout(timerfunc);
+	$.getJSON(playurl+room+"accept-draw",{},function(data){
+		//fixe
+		
+		
+		console.log("acceptdraw sucessefull");
+	},'json').fail(function(jqxhr, textStatus, error ) {
+		var err = textStatus + ', ' + error;
+		console.log( "acceptdrawRequest Failed: " + err);
+		
 		$("#statusmsg").text("Erro a comunicar pedido. Por favor tente outra vez.");
 		$("#statusmsg").show();
 	}).always(function(){
@@ -427,24 +448,7 @@ $(document).ready(function() {
 	
 	$("#acceptdraw").click(function(){
 		if (active==true&&gameactive==true){
-			
-		/*
-		$.post(playurl,{//args
-
-		},function(data){
-				//console.log(data);
-				if (data=="null")//json de jogo cheio
-
-				{
-
-				}else{
-					//TODO  sacar as cartas
-
-				}
-		}).fail(
-		function(){
-			
-		});*/
+			acceptDraw();
 		}
 		console.log("acceptdraw "+active);
 		
@@ -459,6 +463,10 @@ $(document).ready(function() {
 				inlobby=false;
 				clearTimeout(timerfunc);
 				console.log("sucesso sair");
+				$("#readycheck").hide();
+				$("#skipturn").hide();
+				$("#drawcard").hide();
+				$("#acceptdraw").hide();
 				$("#game").hide();
 				$("#statusmsg").hide();
 				$("#lobby").show();

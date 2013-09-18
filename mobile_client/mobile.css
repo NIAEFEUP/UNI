@@ -1,6 +1,7 @@
 ﻿body{
 	background-color:#909090;
 	margin:0px;
+	min-width:500px;
 }
 
 #game{
@@ -10,14 +11,15 @@
 }
 
 #statusmsg{
-	top:0%;
-	left:0%;
+	 position: fixed;
+	top:0;
+	left:0;
 	font-weight:700;
 	color:#FFFFFF;
 	background-color:#000000;
 	font-size:12pt;
 	padding:10px;
-	text-align:center;
+	text-align:left;
 	display:block;
 	float:left;
 	margin:0px;
@@ -75,8 +77,8 @@ div.card .Red{
 	color:#F21120;
 }
 div.card .Blue{
-	background-color:#6411F2;
-	color:#6411F2;
+	background-color: #1851CE;
+	color:#1851CE;
 }
 div.card .Green{
 	background-color:#00ED04;
