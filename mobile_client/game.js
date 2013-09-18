@@ -17,7 +17,7 @@ var gameactive=true;
 //pointer ao set timeout para o desativar quando fizer /quit
 var timerfunc;
 //milisegundos para fazer novo request de status/lobby
-var timerms=1000; 
+var timerms=2000; 
 
 
 function Card(color,value) {
