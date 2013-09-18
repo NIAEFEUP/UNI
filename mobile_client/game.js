@@ -334,7 +334,6 @@ function acceptDraw(){
 $(document).ready(function() {
 	
 	
-	
 	$.ajaxSetup({
 		xhrFields: {
 		withCredentials: true
@@ -394,7 +393,7 @@ $(document).ready(function() {
 
 	
 	
-	$(document).on('click','.card',function(event){
+	$('#game').on('click','.card',function(event){
 		if (active==true&&gameactive==true){	
 			$("#statusmsg").text("A processar jogada");
 		$("#statusmsg").show();
