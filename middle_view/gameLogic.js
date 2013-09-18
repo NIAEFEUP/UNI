@@ -83,6 +83,9 @@ function updateStatus() {
 				recieveCard(data.h.c,data.h.t);
 			}
 			if (data.p!==undefined) {
+				if (activePlayer!=data.p) {
+					document.getElementById("nextPlayer").play();
+				}
 				activePlayer=data.p;
 				updateCurrentPlayers();
 			}
